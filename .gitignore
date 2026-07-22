@@ -15,3 +15,7 @@ venv/
 
 # OS
 .DS_Store
+
+# Build/tool artifacts
+.coverage
+uv.lock
