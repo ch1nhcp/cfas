@@ -2,6 +2,7 @@
 name = "cfas"
 version = "0.1.0"
 description = "Agentic Customer Feedback System - automated intake, triage, and reporting of customer feedback"
+authors = [{ name = "Chris Pham", email = "chinhcpdev@gmail.com" }]
 requires-python = ">=3.11"
 dependencies = [
     "anthropic>=0.80",

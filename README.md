@@ -193,7 +193,7 @@ cfas/
   main.py      CLI
 data/          mock datasets (citable IDs)
 tests/         pytest suite (offline)
-samples/       5 recorded sample runs
+samples/       6 recorded sample runs
 ```
 
 ## AI assistance note
