@@ -9,6 +9,14 @@ code, not via temperature.
 MODEL_ID = "claude-opus-4-8"
 
 CLASSIFY_MAX_TOKENS = 1024
+AGENT_MAX_TOKENS = 2048
+
+# Timeout for LLM API calls only; local JSON-backed tools need none.
+LLM_TIMEOUT_SECONDS = 60.0
+
+# Hard cap on LLM calls in the retrieval loop; hitting it exits with
+# partial context rather than looping forever.
+MAX_TOOL_ITERATIONS = 6
 
 # classification.confidence below this forces is_ambiguous=True (code-owned
 # rule; the LLM's own is_ambiguous flag is only ever OR-ed in, never trusted

@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 
 import pytest
+from fakes import FakeClient, make_text_response
 
 from cfas.classify import (
     ClassificationError,
@@ -35,29 +36,9 @@ VALID_JSON = """{
 }"""
 
 
-def make_response(text, stop_reason="end_turn"):
-    return SimpleNamespace(
-        content=[SimpleNamespace(type="text", text=text)],
-        stop_reason=stop_reason,
-    )
-
-
-class FakeClient:
-    """Returns queued responses and records every request."""
-
-    def __init__(self, responses):
-        self.requests = []
-        self._responses = list(responses)
-        self.messages = SimpleNamespace(create=self._create)
-
-    def _create(self, **kwargs):
-        self.requests.append(kwargs)
-        return self._responses.pop(0)
-
-
 class TestHappyPath:
     def test_returns_validated_classification(self):
-        client = FakeClient([make_response(VALID_JSON)])
+        client = FakeClient([make_text_response(VALID_JSON)])
         c = classify_feedback(SUBMISSION, client=client)
         assert c.category.value == "billing_complaint"
         assert c.confidence == 0.92
@@ -65,7 +46,7 @@ class TestHappyPath:
         assert len(client.requests) == 1
 
     def test_request_contract(self):
-        client = FakeClient([make_response(VALID_JSON)])
+        client = FakeClient([make_text_response(VALID_JSON)])
         classify_feedback(SUBMISSION, client=client)
         req = client.requests[0]
         assert req["model"] == MODEL_ID
@@ -74,7 +55,7 @@ class TestHappyPath:
         assert "temperature" not in req and "top_p" not in req
 
     def test_feedback_is_wrapped_as_untrusted_content(self):
-        client = FakeClient([make_response(VALID_JSON)])
+        client = FakeClient([make_text_response(VALID_JSON)])
         classify_feedback(SUBMISSION, client=client)
         user_content = client.requests[0]["messages"][0]["content"]
         assert "<customer_feedback>" in user_content
@@ -85,18 +66,18 @@ class TestHappyPath:
 class TestAmbiguityRule:
     def test_low_confidence_forces_ambiguous(self):
         low = VALID_JSON.replace("0.92", str(AMBIGUITY_THRESHOLD - 0.1))
-        client = FakeClient([make_response(low)])
+        client = FakeClient([make_text_response(low)])
         c = classify_feedback(SUBMISSION, client=client)
         assert c.is_ambiguous is True  # code overrides the LLM's false
 
     def test_llm_ambiguous_flag_is_kept_when_confident(self):
         flagged = VALID_JSON.replace('"is_ambiguous": false', '"is_ambiguous": true')
-        client = FakeClient([make_response(flagged)])
+        client = FakeClient([make_text_response(flagged)])
         c = classify_feedback(SUBMISSION, client=client)
         assert c.is_ambiguous is True  # never downgraded
 
     def test_confident_unambiguous_stays_unambiguous(self):
-        client = FakeClient([make_response(VALID_JSON)])
+        client = FakeClient([make_text_response(VALID_JSON)])
         c = classify_feedback(SUBMISSION, client=client)
         assert c.is_ambiguous is False
 
@@ -104,14 +85,14 @@ class TestAmbiguityRule:
 class TestRepairRetry:
     def test_invalid_category_repaired_on_second_call(self):
         bad = VALID_JSON.replace("billing_complaint", "spam_report")
-        client = FakeClient([make_response(bad), make_response(VALID_JSON)])
+        client = FakeClient([make_text_response(bad), make_text_response(VALID_JSON)])
         c = classify_feedback(SUBMISSION, client=client)
         assert c.category.value == "billing_complaint"
         assert len(client.requests) == 2
 
     def test_repair_request_carries_validation_errors(self):
         bad = VALID_JSON.replace("0.92", "1.7")  # out of [0,1]
-        client = FakeClient([make_response(bad), make_response(VALID_JSON)])
+        client = FakeClient([make_text_response(bad), make_text_response(VALID_JSON)])
         classify_feedback(SUBMISSION, client=client)
         repair_messages = client.requests[1]["messages"]
         assert len(repair_messages) == 3  # user, assistant echo, repair user
@@ -120,7 +101,7 @@ class TestRepairRetry:
 
     def test_second_failure_raises(self):
         bad = VALID_JSON.replace("billing_complaint", "spam_report")
-        client = FakeClient([make_response(bad), make_response(bad)])
+        client = FakeClient([make_text_response(bad), make_text_response(bad)])
         with pytest.raises(ClassificationError):
             classify_feedback(SUBMISSION, client=client)
         assert len(client.requests) == 2  # exactly one repair, no loop
@@ -128,13 +109,13 @@ class TestRepairRetry:
 
 class TestResponseEdgeCases:
     def test_refusal_raises_without_retry(self):
-        client = FakeClient([make_response("", stop_reason="refusal")])
+        client = FakeClient([make_text_response("", stop_reason="refusal")])
         with pytest.raises(ClassificationError, match="refus"):
             classify_feedback(SUBMISSION, client=client)
         assert len(client.requests) == 1
 
     def test_truncated_output_raises(self):
-        client = FakeClient([make_response("{", stop_reason="max_tokens")])
+        client = FakeClient([make_text_response("{", stop_reason="max_tokens")])
         with pytest.raises(ClassificationError, match="max_tokens"):
             classify_feedback(SUBMISSION, client=client)
 
@@ -147,7 +128,7 @@ class TestResponseEdgeCases:
     def test_refusal_on_repair_response_raises(self):
         bad = VALID_JSON.replace("billing_complaint", "spam_report")
         client = FakeClient(
-            [make_response(bad), make_response("", stop_reason="refusal")]
+            [make_text_response(bad), make_text_response("", stop_reason="refusal")]
         )
         with pytest.raises(ClassificationError, match="refus"):
             classify_feedback(SUBMISSION, client=client)

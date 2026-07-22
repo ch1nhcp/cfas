@@ -23,6 +23,7 @@ import anthropic
 from pydantic import ValidationError
 
 from cfas.config import AMBIGUITY_THRESHOLD, CLASSIFY_MAX_TOKENS, MODEL_ID
+from cfas.llm import default_client
 from cfas.models import Classification, FeedbackSubmission
 
 
@@ -162,7 +163,7 @@ def classify_feedback(
 ) -> Classification:
     """Classify one submission. Raises ClassificationError when the model
     cannot produce a schema-valid Classification within one repair retry."""
-    client = client or anthropic.Anthropic()
+    client = client or default_client()
     request = _base_request(submission)
 
     response = client.messages.create(**request)
