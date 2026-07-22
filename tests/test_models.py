@@ -8,14 +8,18 @@ The critical properties under test:
 - All models are frozen (immutable) - pipeline stages build new objects.
 """
 
+from datetime import datetime, timezone
+
 import pytest
 from pydantic import ValidationError
 
 from cfas.models import (
     ActionType,
+    Channel,
     Classification,
     FeedbackCategory,
     FeedbackReport,
+    FeedbackSubmission,
     ReportDraft,
     ReportStatus,
     Sentiment,
@@ -33,8 +37,7 @@ def make_classification(**overrides):
         "reason": "Customer explicitly disputes a charge.",
         "is_ambiguous": False,
     }
-    fields.update(overrides)
-    return Classification(**fields)
+    return Classification(**{**fields, **overrides})
 
 
 def make_draft(**overrides):
@@ -52,8 +55,40 @@ def make_draft(**overrides):
         ],
         "confidence": 0.85,
     }
-    fields.update(overrides)
-    return ReportDraft(**fields)
+    return ReportDraft(**{**fields, **overrides})
+
+
+class TestFeedbackSubmission:
+    """Normalization invariants live on the model itself, not just at the CLI."""
+
+    TS = datetime(2026, 7, 1, tzinfo=timezone.utc)
+
+    def test_strips_feedback_text(self):
+        s = FeedbackSubmission(
+            feedback_text="  needs a trim  ",
+            customer_id=None,
+            timestamp=self.TS,
+            channel=Channel.CHAT,
+        )
+        assert s.feedback_text == "needs a trim"
+
+    def test_rejects_whitespace_only_feedback_text(self):
+        with pytest.raises(ValidationError):
+            FeedbackSubmission(
+                feedback_text="   \n ",
+                customer_id=None,
+                timestamp=self.TS,
+                channel=Channel.CHAT,
+            )
+
+    def test_blank_customer_id_normalized_to_none(self):
+        s = FeedbackSubmission(
+            feedback_text="Hi",
+            customer_id="  ",
+            timestamp=self.TS,
+            channel=Channel.CHAT,
+        )
+        assert s.customer_id is None
 
 
 class TestClassification:
@@ -148,8 +183,7 @@ class TestFeedbackReport:
             "review_reason": None,
             "status": ReportStatus.PENDING_REVIEW,
         }
-        fields.update(overrides)
-        return FeedbackReport(**fields)
+        return FeedbackReport(**{**fields, **overrides})
 
     def test_valid_report(self):
         r = self.make_report()

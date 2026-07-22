@@ -27,7 +27,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--channel",
-        default=Channel.WEB_FORM.value,
+        required=True,
         choices=[c.value for c in Channel],
         help="Channel the feedback arrived through",
     )

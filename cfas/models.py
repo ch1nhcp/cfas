@@ -20,7 +20,7 @@ Design principles:
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class Channel(StrEnum):
@@ -78,7 +78,12 @@ class ReportStatus(StrEnum):
 
 
 class FeedbackSubmission(BaseModel):
-    """A raw feedback submission plus minimal metadata. System boundary input."""
+    """A raw feedback submission plus minimal metadata. System boundary input.
+
+    Normalization lives on the model so the invariants hold no matter which
+    entry point constructs it: feedback_text is stripped (whitespace-only
+    fails min_length), a blank customer_id becomes None (anonymous).
+    """
 
     model_config = ConfigDict(frozen=True)
 
@@ -86,6 +91,18 @@ class FeedbackSubmission(BaseModel):
     customer_id: str | None
     timestamp: datetime
     channel: Channel
+
+    @field_validator("feedback_text", mode="before")
+    @classmethod
+    def _strip_feedback_text(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("customer_id", mode="before")
+    @classmethod
+    def _blank_customer_id_to_none(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip() or None
+        return value
 
 
 class Classification(BaseModel):
@@ -134,19 +151,14 @@ class ReportDraft(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
 
 
-class FeedbackReport(BaseModel):
-    """Final report assembled by code from a ReportDraft + validation gate
-    results. The LLM never produces this model directly."""
+class FeedbackReport(ReportDraft):
+    """Final report: the draft fields plus code-owned control fields.
 
-    model_config = ConfigDict(frozen=True)
+    Assembled by code from a ReportDraft + validation gate results; the LLM
+    never produces this model directly. classification is None only for
+    processing-failure reports where classification itself failed."""
 
     report_id: str
-    summary: str
-    customer_context: str
-    workflow_references: list[str]
-    policy_references: list[str]
-    suggested_actions: list[SuggestedAction]
-    confidence: float = Field(ge=0.0, le=1.0)
     classification: Classification | None
     warnings: list[str]
     missing_context: list[str]
