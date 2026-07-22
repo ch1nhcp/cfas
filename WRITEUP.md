@@ -4,13 +4,14 @@ Chris Pham (chinhcpdev@gmail.com) — July 2026
 
 ## Why this structure
 
-**Single agent inside a controlled pipeline.** The stages of this problem
+**Single agent inside a controlled pipeline — a fixed pipeline outside, a
+ReAct-style loop only where it pays.** The stages of this problem
 (classify → gather context → validate → report) are fixed and known, so the
-pipeline is fixed code. Agency is applied only where it pays: inside the
-retrieval loop, the LLM freely decides which tools to call, in what order,
-with what arguments — that is the part that genuinely benefits from
-model judgment (e.g. narrowing a policy search, skipping an impossible
-lookup). Everything around it is deterministic: a per-source state machine
+outer flow is deterministic code, not a free-running agent. A ReAct-style
+tool loop exists only inside retrieval: there the LLM freely decides which
+tools to call, in what order, with what arguments — the one part that
+genuinely benefits from model judgment (e.g. narrowing a policy search,
+skipping an impossible lookup). Everything around it is deterministic: a per-source state machine
 decides when the loop is done, a two-phase gate decides what needs human
 review, and code — never the LLM — sets `status` and `needs_human_review`.
 Concretely, the LLM-facing schemas (`Classification`, `ReportDraft`)
