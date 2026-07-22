@@ -16,8 +16,23 @@ import anthropic
 from pydantic import BaseModel, ValidationError
 
 from cfas.config import LLM_TIMEOUT_SECONDS
+from cfas.models import FeedbackSubmission
 
 T = TypeVar("T", bound=BaseModel)
+
+
+def render_submission_block(
+    submission: FeedbackSubmission, customer_line: str | None = None
+) -> str:
+    """Uniform prompt rendering of a submission: metadata plus the feedback
+    text wrapped as untrusted content (every stage prompt shares this)."""
+    customer = customer_line or submission.customer_id or "not provided"
+    return (
+        f"Channel: {submission.channel.value}\n"
+        f"Customer ID: {customer}\n"
+        f"Received at: {submission.timestamp.isoformat()}\n\n"
+        f"<customer_feedback>\n{submission.feedback_text}\n</customer_feedback>"
+    )
 
 
 def default_client() -> anthropic.Anthropic:

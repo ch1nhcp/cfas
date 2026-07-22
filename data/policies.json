@@ -45,6 +45,17 @@
     "last_updated": "2026-01-10"
   },
   {
+    "policy_id": "POL-FEEDBACK-001",
+    "name": "General Feedback Handling Policy",
+    "applicable_categories": ["praise", "feature_request", "other"],
+    "rules": [
+      "Positive feedback is acknowledged within 2 business days; beyond logging, no further action is required.",
+      "Feature requests are recorded in the product feedback backlog with the customer tier attached; no delivery dates are committed.",
+      "Feedback that fits no defined category is logged and routed to a CS lead for weekly triage."
+    ],
+    "last_updated": "2026-05-02"
+  },
+  {
     "policy_id": "POL-RETENTION-001",
     "name": "Customer Retention Offers Policy",
     "applicable_categories": ["churn_risk"],

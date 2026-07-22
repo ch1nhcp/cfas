@@ -103,6 +103,18 @@ class TestDedupe:
         flags = [r.deduped for r in result.tool_calls if r.tool_name == "get_customer"]
         assert flags == [False, True]
 
+    def test_deduped_success_does_not_duplicate_context(self):
+        repeat = customer_call(reason="asking again", cid="t9")
+        client = FakeClient(
+            [
+                make_response(
+                    customer_call(), repeat, policies_call(), guidelines_call()
+                )
+            ]
+        )
+        result = gather_context(SUBMISSION, CLASSIFICATION, client=client)
+        assert len(result.context[Source.CUSTOMER]) == 1
+
     def test_different_functional_args_are_not_deduped(self):
         narrowed = tool_use_block(
             "search_policies",
@@ -218,12 +230,39 @@ class TestFailureStates:
             [
                 make_response(
                     customer_call("CUST-404"), policies_call(), guidelines_call()
-                )
+                ),
+                # final-chance turn: agent sees the not_found and stops
+                make_text_response("No such customer; context gathering done."),
             ]
         )
         result = gather_context(missing, CLASSIFICATION, client=client)
         assert result.source_states[Source.CUSTOMER] is SourceStatus.NOT_FOUND
         assert any("customer" in note for note in result.missing_context)
+        assert len(client.requests) == 2  # exactly one final-chance turn
+
+    def test_final_chance_allows_broadening_after_not_found(self):
+        narrow = tool_use_block(
+            "search_policies",
+            {
+                "category": "billing_complaint",
+                "query": "quantum warp drive",
+                "reason": "narrow first",
+            },
+            "t6",
+        )
+        client = FakeClient(
+            [
+                make_response(narrow, guidelines_call()),
+                # agent sees not_found, broadens without the query
+                make_response(policies_call(reason="broaden after not_found")),
+            ]
+        )
+        result = gather_context(ANONYMOUS, CLASSIFICATION, client=client)
+        assert result.source_states[Source.POLICIES] is SourceStatus.RETRIEVED
+        assert result.missing_context == [
+            "customer: not available for this submission (no customer ID)"
+        ]
+        assert result.iterations == 2
 
     def test_broken_data_source_becomes_tool_error(self, tmp_path):
         client = FakeClient(
@@ -252,6 +291,27 @@ class TestFailureStates:
         )
         result = gather_context(SUBMISSION, CLASSIFICATION, client=client)
         assert result.source_states[Source.CUSTOMER] is SourceStatus.TOOL_ERROR
+
+    def test_reserved_data_dir_argument_is_invalid_input(self):
+        # injecting the loop's own data_dir kwarg must be correctable, not a
+        # terminal tool_error
+        poisoned = tool_use_block(
+            "get_customer",
+            {"customer_id": "CUST-001", "reason": "lookup", "data_dir": "/etc"},
+            "t5",
+        )
+        client = FakeClient(
+            [
+                make_response(poisoned, policies_call(), guidelines_call()),
+                make_response(customer_call()),
+            ]
+        )
+        result = gather_context(SUBMISSION, CLASSIFICATION, client=client)
+        statuses = [
+            r.status for r in result.tool_calls if r.tool_name == "get_customer"
+        ]
+        assert statuses == ["invalid_input", "success"]
+        assert result.source_states[Source.CUSTOMER] is SourceStatus.RETRIEVED
 
     def test_missing_required_argument_is_invalid_input(self):
         incomplete = tool_use_block("get_customer", {"reason": "lookup"}, "t5")

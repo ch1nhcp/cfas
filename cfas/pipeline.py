@@ -54,6 +54,28 @@ class PipelineResult(BaseModel):
     trace: dict
 
 
+def _record_retrieval(recorder: TraceRecorder, retrieval) -> None:
+    recorder.record(
+        "retrieval",
+        iterations=retrieval.iterations,
+        source_states={
+            s.value: st.value for s, st in retrieval.source_states.items()
+        },
+        tool_calls=[r.model_dump() for r in retrieval.tool_calls],
+        warnings=retrieval.warnings,
+    )
+
+
+def _record_report(recorder: TraceRecorder, report: FeedbackReport) -> None:
+    recorder.record(
+        "report",
+        confidence=report.confidence,
+        needs_human_review=report.needs_human_review,
+        review_reason=report.review_reason,
+        warnings=report.warnings,
+    )
+
+
 def process_feedback(
     submission: FeedbackSubmission,
     client=None,
@@ -78,15 +100,7 @@ def process_feedback(
         retrieval = gather_context(
             submission, classification, client=retrying, data_dir=data_dir
         )
-        recorder.record(
-            "retrieval",
-            iterations=retrieval.iterations,
-            source_states={
-                s.value: st.value for s, st in retrieval.source_states.items()
-            },
-            tool_calls=[r.model_dump() for r in retrieval.tool_calls],
-            warnings=retrieval.warnings,
-        )
+        _record_retrieval(recorder, retrieval)
 
         context_validation = validate_context(classification, retrieval)
         recorder.record(
@@ -96,19 +110,14 @@ def process_feedback(
         )
 
         report = generate_report(
+            submission=submission,
             classification=classification,
             retrieval=retrieval,
             context_validation=context_validation,
             client=retrying,
             report_id=report_id,
         )
-        recorder.record(
-            "report",
-            confidence=report.confidence,
-            needs_human_review=report.needs_human_review,
-            review_reason=report.review_reason,
-            warnings=report.warnings,
-        )
+        _record_report(recorder, report)
     except PIPELINE_ERRORS as exc:
         if isinstance(exc, CONFIG_ERRORS):
             raise

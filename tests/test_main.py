@@ -60,7 +60,7 @@ class TestMain:
                 str(tmp_path),
             ]
         )
-        assert exit_code == 0
+        assert exit_code == 3  # report produced, but processing failed
         captured = capsys.readouterr()
         report = json.loads(captured.out)
         assert report["status"] == "processing_failed"

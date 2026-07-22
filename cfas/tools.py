@@ -228,6 +228,7 @@ TOOL_DEFINITIONS: list[dict] = [
                 "reason": _REASON_PROPERTY,
             },
             "required": ["customer_id", "reason"],
+            "additionalProperties": False,
         },
     },
     {
@@ -247,6 +248,7 @@ TOOL_DEFINITIONS: list[dict] = [
                 "reason": _REASON_PROPERTY,
             },
             "required": ["category", "reason"],
+            "additionalProperties": False,
         },
     },
     {
@@ -262,6 +264,7 @@ TOOL_DEFINITIONS: list[dict] = [
                 "reason": _REASON_PROPERTY,
             },
             "required": ["category", "reason"],
+            "additionalProperties": False,
         },
     },
 ]

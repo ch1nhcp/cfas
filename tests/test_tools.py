@@ -117,10 +117,6 @@ class TestSearchPolicies:
         assert r.status is ToolStatus.SUCCESS
         assert r.source_ids == ["POL-REFUND-001"]
 
-    def test_not_found_for_category_without_policies(self):
-        r = search_policies("other", REASON)
-        assert r.status is ToolStatus.NOT_FOUND
-
     def test_not_found_when_query_matches_nothing(self):
         r = search_policies("billing_complaint", REASON, query="quantum warp drive")
         assert r.status is ToolStatus.NOT_FOUND

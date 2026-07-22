@@ -141,6 +141,8 @@ class TestEndToEndEdgeCases:
             make_response(
                 customer_call("CUST-404"), policies_call(), guidelines_call()
             ),
+            # final-chance turn after the not_found
+            make_text_response("Customer record does not exist; done."),
             make_text_response(DRAFT_JSON.replace("CUST-001, premium tier.",
                                                   "Customer record not found.")),
         ]

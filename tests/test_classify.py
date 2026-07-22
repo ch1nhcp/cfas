@@ -11,13 +11,15 @@ from types import SimpleNamespace
 import pytest
 from fakes import FakeClient, make_text_response
 
-from cfas.classify import (
-    ClassificationError,
-    classification_output_schema,
-    classify_feedback,
-)
+from cfas.classify import ClassificationError, classify_feedback
 from cfas.config import AMBIGUITY_THRESHOLD, MODEL_ID
 from cfas.intake import build_submission
+from cfas.llm import structured_output_schema
+from cfas.models import Classification
+
+
+def classification_output_schema():
+    return structured_output_schema(Classification)
 
 SUBMISSION = build_submission(
     feedback_text="I was charged twice for my subscription this month.",

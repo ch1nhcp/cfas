@@ -6,10 +6,11 @@ from factories import (
     make_classification,
     make_draft,
     make_retrieval,
+    make_submission,
 )
 
 from cfas.config import REPORT_CONFIDENCE_THRESHOLD
-from cfas.gate import validate_context, validate_report
+from cfas.gate import grounded_id_set, validate_context, validate_report
 from cfas.models import ActionType, FeedbackCategory, Urgency
 from cfas.agent import Source, SourceStatus
 
@@ -140,6 +141,50 @@ class TestValidateReportGrounding:
 
     def test_grounded_id_in_free_text_is_fine(self):
         draft = make_draft(summary="Refund per POL-REFUND-001.")
+        v = validate_report(draft, RETRIEVED_IDS)
+        assert v.review_reasons == []
+
+
+class TestGroundedIdSet:
+    def test_includes_retrieved_ids(self):
+        assert set(RETRIEVED_IDS) <= set(grounded_id_set(make_retrieval()))
+
+    def test_includes_ids_quoted_inside_retrieved_data(self):
+        retrieval = make_retrieval(
+            context={
+                Source.CUSTOMER: [],
+                Source.POLICIES: [],
+                Source.GUIDELINES: [
+                    [{"required_steps": ["Apply POL-ESCALATION-001 rules."]}]
+                ],
+            }
+        )
+        assert "POL-ESCALATION-001" in grounded_id_set(retrieval)
+
+    def test_includes_submission_customer_id(self):
+        submission = make_submission(customer_id="CUST-404")
+        assert "CUST-404" in grounded_id_set(make_retrieval(), submission)
+
+    def test_honest_mention_of_missing_customer_is_not_flagged(self):
+        # the CUST-404 demo path: the report honestly names the ID it
+        # could not find - that is not a hallucination
+        submission = make_submission(customer_id="CUST-404")
+        draft = make_draft(
+            customer_context="No customer record found for CUST-404."
+        )
+        v = validate_report(draft, grounded_id_set(make_retrieval(), submission))
+        assert v.review_reasons == []
+        assert v.warnings == []
+
+
+class TestCaseInsensitiveScan:
+    def test_lowercase_hallucinated_id_is_caught(self):
+        draft = make_draft(summary="Refund per pol-refund-999.")
+        v = validate_report(draft, RETRIEVED_IDS)
+        assert any("pol-refund-999" in w for w in v.warnings)
+
+    def test_lowercase_mention_of_grounded_id_is_fine(self):
+        draft = make_draft(summary="Refund per pol-refund-001.")
         v = validate_report(draft, RETRIEVED_IDS)
         assert v.review_reasons == []
 

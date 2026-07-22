@@ -1,7 +1,7 @@
 """Report generation tests: LLM drafts, code assembles and controls."""
 
 import pytest
-from factories import make_classification, make_retrieval
+from factories import make_classification, make_retrieval, make_submission
 from fakes import FakeClient, make_text_response
 
 from cfas.agent import Source, SourceStatus
@@ -25,11 +25,12 @@ VALID_DRAFT_JSON = """{
 }"""
 
 
-def run_generate(client, classification=None, retrieval=None):
+def run_generate(client, classification=None, retrieval=None, submission=None):
     classification = classification or make_classification()
     retrieval = retrieval or make_retrieval()
     context_validation = validate_context(classification, retrieval)
     return generate_report(
+        submission=submission or make_submission(),
         classification=classification,
         retrieval=retrieval,
         context_validation=context_validation,
@@ -62,6 +63,13 @@ class TestHappyPath:
         assert "POL-REFUND-001" in content  # retrieved ids listed
         assert "billing_complaint" in content  # classification present
         assert client.requests[0]["output_config"]["format"]["type"] == "json_schema"
+
+    def test_request_contains_original_feedback_as_untrusted(self):
+        client = FakeClient([make_text_response(VALID_DRAFT_JSON)])
+        run_generate(client)
+        content = client.requests[0]["messages"][0]["content"]
+        assert "<customer_feedback>" in content
+        assert "charged twice" in content
 
 
 class TestGateIntegration:
@@ -122,6 +130,7 @@ class TestReportIds:
         classification = make_classification()
         retrieval = make_retrieval()
         report = generate_report(
+            submission=make_submission(),
             classification=classification,
             retrieval=retrieval,
             context_validation=validate_context(classification, retrieval),

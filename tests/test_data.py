@@ -88,6 +88,14 @@ class TestPolicies:
             for cat in p["applicable_categories"]:
                 assert cat in VALID_CATEGORIES, f"{p['policy_id']}: {cat}"
 
+    def test_every_category_has_policy_coverage(self, policies):
+        """A category with no applicable policy would force human review on
+        every submission in it (not_found -> missing_context)."""
+        covered = set()
+        for p in policies:
+            covered.update(p["applicable_categories"])
+        assert covered == VALID_CATEGORIES
+
 
 class TestGuidelines:
     def test_ids_unique_and_citable(self, guidelines):
@@ -106,6 +114,12 @@ class TestGuidelines:
             assert g["category"] in VALID_CATEGORIES, (
                 f"{g['guideline_id']}: {g['category']}"
             )
+
+    def test_every_category_except_other_has_sop(self, guidelines):
+        """'other' deliberately has no SOP: uncategorizable feedback should
+        land in human review via the missing-context path."""
+        covered = {g["category"] for g in guidelines}
+        assert covered == VALID_CATEGORIES - {"other"}
 
     def test_policy_references_in_steps_resolve(self, guidelines, policies):
         """A SOP step citing POL-XXX-NNN must point at a real policy - the

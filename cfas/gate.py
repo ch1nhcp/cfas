@@ -14,6 +14,7 @@ The report assembly step combines both phases to set the final
 needs_human_review; the LLM never controls any of these fields.
 """
 
+import json
 import re
 
 from pydantic import BaseModel, ConfigDict
@@ -24,6 +25,7 @@ from cfas.models import (
     ActionType,
     Classification,
     FeedbackCategory,
+    FeedbackSubmission,
     ReportDraft,
     SuggestedAction,
     Urgency,
@@ -32,10 +34,13 @@ from cfas.models import (
 # ID shapes that must be groundable in retrieved data when they appear
 # anywhere in a report. Deliberately broader than the real data conventions
 # (any CUST-/POL-/SOP- segment chain) so hallucinated variants like
-# POL-REFUND-V2-001 are caught too. TCK-/ORD- IDs are excluded: they live
-# inside retrieved customer records, not in retrieved_source_ids, so
-# scanning them would flag legitimately grounded mentions.
-_SOURCE_ID_PATTERN = re.compile(r"\b(?:CUST|POL|SOP)(?:-[A-Z0-9]+)+\b")
+# POL-REFUND-V2-001 are caught too; case-insensitive so a lowercase mention
+# cannot evade the scan. TCK-/ORD- IDs are excluded: they live inside
+# retrieved customer records, not in retrieved_source_ids, so scanning them
+# would flag legitimately grounded mentions.
+_SOURCE_ID_PATTERN = re.compile(
+    r"\b(?:CUST|POL|SOP)(?:-[A-Z0-9]+)+\b", re.IGNORECASE
+)
 
 # Action types that may legitimately carry no source citations.
 _CITATION_EXEMPT_TYPES = frozenset({ActionType.MANUAL_TRIAGE, ActionType.LOG_ONLY})
@@ -92,8 +97,32 @@ def validate_context(
     return ContextValidation(
         missing_context=retrieval.missing_context,
         warnings=retrieval.warnings,
-        review_reasons=reasons,
+        review_reasons=list(dict.fromkeys(reasons)),
     )
+
+
+def grounded_id_set(
+    retrieval: RetrievalResult,
+    submission: FeedbackSubmission | None = None,
+) -> list[str]:
+    """Every ID a report may legitimately mention:
+
+    - IDs of retrieved records (retrieved_source_ids),
+    - IDs appearing INSIDE retrieved data (e.g. a policy ID quoted by an
+      SOP's required_steps) - quoting retrieved content is not hallucination,
+    - the submission's own customer ID - a not-found lookup may honestly be
+      named in the report ("no record found for CUST-404").
+    """
+    known = list(retrieval.retrieved_source_ids)
+    context_json = json.dumps(
+        {source.value: data for source, data in retrieval.context.items()}
+    )
+    for mention in _SOURCE_ID_PATTERN.findall(context_json):
+        if mention not in known:
+            known.append(mention)
+    if submission and submission.customer_id and submission.customer_id not in known:
+        known.append(submission.customer_id)
+    return known
 
 
 def _split_grounded(ids: list[str], known: set[str]) -> tuple[list[str], list[str]]:
@@ -130,16 +159,21 @@ def _sanitize_action(
 
 def _scan_free_text(draft: ReportDraft, known: set[str]) -> list[str]:
     """IDs mentioned in prose must be grounded too - a hallucinated
-    'per POL-XXX-999' inside the summary is as bad as one in a list."""
+    'per POL-XXX-999' inside the summary is as bad as one in a list.
+    Comparison is case-insensitive (the pattern matches lowercase too)."""
+    known_upper = {i.upper() for i in known}
     texts = [
         draft.summary,
         draft.customer_context,
         *[action.action for action in draft.suggested_actions],
     ]
-    ungrounded = []
+    ungrounded: list[str] = []
+    seen_upper: set[str] = set()
     for text in texts:
         for mention in _SOURCE_ID_PATTERN.findall(text):
-            if mention not in known and mention not in ungrounded:
+            upper = mention.upper()
+            if upper not in known_upper and upper not in seen_upper:
+                seen_upper.add(upper)
                 ungrounded.append(mention)
     return ungrounded
 

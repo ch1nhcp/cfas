@@ -1,8 +1,11 @@
 """Shared domain-object factories for tests."""
 
+from datetime import datetime, timezone
+
 from fakes import tool_use_block
 
 from cfas.agent import RetrievalResult, Source, SourceStatus
+from cfas.intake import build_submission
 from cfas.models import (
     ActionType,
     Classification,
@@ -14,6 +17,16 @@ from cfas.models import (
 )
 
 RETRIEVED_IDS = ["CUST-001", "POL-REFUND-001", "POL-SLA-001", "SOP-BILLING-001"]
+
+
+def make_submission(**overrides):
+    fields = {
+        "feedback_text": "I was charged twice for my subscription.",
+        "customer_id": "CUST-001",
+        "channel": "email",
+        "timestamp": datetime(2026, 7, 20, tzinfo=timezone.utc),
+    }
+    return build_submission(**{**fields, **overrides})
 
 
 def make_classification(**overrides):

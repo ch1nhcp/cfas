@@ -19,7 +19,7 @@ import anthropic
 from pydantic import ValidationError
 
 from cfas.intake import build_submission
-from cfas.models import Channel
+from cfas.models import Channel, ReportStatus
 from cfas.pipeline import CONFIG_ERRORS, process_feedback
 from cfas.tools import DATA_DIR
 from cfas.trace import print_trace_summary, write_run_artifacts
@@ -115,7 +115,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     print(f"artifacts: {run_dir}", file=sys.stderr)
     print(result.report.model_dump_json(indent=2))
-    return 0
+    # 0: report produced; 3: pipeline fell back to a processing_failed
+    # report - scripts can distinguish without parsing the JSON
+    return 3 if result.report.status is ReportStatus.PROCESSING_FAILED else 0
 
 
 if __name__ == "__main__":

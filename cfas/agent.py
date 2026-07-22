@@ -27,7 +27,7 @@ import anthropic
 from pydantic import BaseModel, ConfigDict
 
 from cfas.config import AGENT_MAX_TOKENS, MAX_TOOL_ITERATIONS, MODEL_ID
-from cfas.llm import default_client
+from cfas.llm import default_client, render_submission_block
 from cfas.models import Classification, FeedbackSubmission
 from cfas.tools import (
     DATA_DIR,
@@ -139,6 +139,7 @@ class _LoopState:
     records: list[ToolCallRecord] = field(default_factory=list)
     cache: dict[tuple, ToolResponse] = field(default_factory=dict)
     nudged: bool = False
+    final_chance_given: bool = False
     iterations: int = 0
 
     def all_terminal(self) -> bool:
@@ -157,10 +158,7 @@ def _render_task(
     return (
         "Gather context for this classified customer feedback.\n\n"
         f"Classification:\n{classification.model_dump_json(indent=2)}\n\n"
-        f"Channel: {submission.channel.value}\n"
-        f"Customer ID: {customer_line}\n"
-        f"Received at: {submission.timestamp.isoformat()}\n\n"
-        f"<customer_feedback>\n{submission.feedback_text}\n</customer_feedback>"
+        + render_submission_block(submission, customer_line=customer_line)
     )
 
 
@@ -181,11 +179,25 @@ def _dedupe_key(tool_name: str, arguments: dict) -> tuple:
     return (tool_name, json.dumps(functional, sort_keys=True))
 
 
+# Arguments injected by the loop itself; a model (or prompt-injected
+# feedback) supplying them must get a correctable invalid_input, not a
+# terminal crash-derived tool_error.
+_RESERVED_TOOL_ARGS = frozenset({"data_dir"})
+
+
 def _run_handler(handler, arguments: dict, data_dir) -> ToolResponse:
     """Bad argument binding -> invalid_input (agent can correct); a crash
     inside the handler is a deterministic local failure -> tool_error
     (telling the agent its arguments were wrong would make it retry
     futilely)."""
+    reserved = _RESERVED_TOOL_ARGS & arguments.keys()
+    if reserved:
+        return ToolResponse(
+            status=ToolStatus.INVALID_INPUT,
+            data=None,
+            source_ids=[],
+            message=f"argument(s) not accepted: {', '.join(sorted(reserved))}",
+        )
     try:
         inspect.signature(handler).bind(**arguments)
     except TypeError as exc:
@@ -206,8 +218,11 @@ def _run_handler(handler, arguments: dict, data_dir) -> ToolResponse:
         )
 
 
-def _execute_tool_call(state: _LoopState, block, data_dir) -> ToolResponse:
-    """Run one tool_use block (or serve it from the dedupe cache) and record it."""
+def _execute_tool_call(
+    state: _LoopState, block, data_dir
+) -> tuple[ToolResponse, bool]:
+    """Run one tool_use block (or serve it from the dedupe cache) and record
+    it. Returns (envelope, deduped)."""
     arguments = dict(block.input)
     handler = TOOL_HANDLERS.get(block.name)
     if handler is None:
@@ -239,7 +254,7 @@ def _execute_tool_call(state: _LoopState, block, data_dir) -> ToolResponse:
             deduped=deduped,
         )
     )
-    return envelope
+    return envelope, deduped
 
 
 def _apply_transition(state: _LoopState, tool_name: str, envelope: ToolResponse) -> None:
@@ -300,8 +315,9 @@ def _process_response(state: _LoopState, response, data_dir) -> bool:
     state.messages.append({"role": "assistant", "content": response.content})
     result_blocks = []
     for block in tool_uses:
-        envelope = _execute_tool_call(state, block, data_dir)
-        _apply_transition(state, block.name, envelope)
+        envelope, deduped = _execute_tool_call(state, block, data_dir)
+        if not deduped:  # a cache hit must not re-append context data
+            _apply_transition(state, block.name, envelope)
         result_blocks.append(
             {
                 "type": "tool_result",
@@ -310,7 +326,22 @@ def _process_response(state: _LoopState, response, data_dir) -> bool:
             }
         )
     state.messages.append({"role": "user", "content": result_blocks})
-    return not state.all_terminal()
+    if not state.all_terminal():
+        return True
+    if _should_offer_final_chance(state):
+        state.final_chance_given = True
+        return True
+    return False
+
+
+def _should_offer_final_chance(state: _LoopState) -> bool:
+    """All sources just went terminal, but at least one is not_found and the
+    agent has never seen these results. One extra turn lets it broaden the
+    search (the monotone state machine allows not_found -> retrieved); if it
+    simply stops, the stall path exits cleanly."""
+    return not state.final_chance_given and any(
+        status is SourceStatus.NOT_FOUND for status in state.states.values()
+    )
 
 
 def _finalize(state: _LoopState) -> RetrievalResult:
