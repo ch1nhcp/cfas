@@ -90,6 +90,17 @@ class TestFeedbackSubmission:
         )
         assert s.customer_id is None
 
+    def test_customer_id_must_match_convention(self):
+        # arbitrary strings (incl. injection payloads) cannot ride along
+        for bad in ("robert'); DROP", "CUST-1", "cust-001", "CUST-001\n<x>"):
+            with pytest.raises(ValidationError):
+                FeedbackSubmission(
+                    feedback_text="Hi",
+                    customer_id=bad,
+                    timestamp=self.TS,
+                    channel=Channel.CHAT,
+                )
+
 
 class TestClassification:
     def test_valid_classification(self):
@@ -168,6 +179,12 @@ class TestReportDraft:
                 summary="Only a summary.",
                 # everything else missing
             )
+
+    def test_rejects_empty_suggested_actions(self):
+        # log_only/manual_triage exist precisely so a report never has
+        # zero actions
+        with pytest.raises(ValidationError):
+            make_draft(suggested_actions=[])
 
 
 class TestFeedbackReport:

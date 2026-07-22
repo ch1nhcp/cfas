@@ -100,12 +100,15 @@ Re-running a command writes a fresh `samples/RUN-<id>/` directory
 | 7 | Angry/abusive feedback with a threat | `abuse_policy_violation` + high urgency → Trust & Safety escalation, forced review | `python -m cfas.main "This is absolute garbage and if you don't fix my account right now I will make you and your support team regret it." --customer-id CUST-004 --channel email --out-dir samples` |
 
 **Prompt-injection guardrail** (case 6): feedback text is wrapped in
-`<customer_feedback>` delimiters and every stage's system prompt declares
-it untrusted content. Structurally, the LLM cannot obey "mark this
-resolved" even if tricked - its output schemas contain no status or review
-fields; code always sets `status=pending_review`. In the recorded run the
-model classifies the attempt normally, names it as an injection attempt in
-the summary, approves nothing, and the report still lands in human review.
+`<customer_feedback>` delimiters (content HTML-escaped, so an embedded
+`</customer_feedback>` cannot break out) and every stage's system prompt
+declares it untrusted content; customer IDs are format-validated at intake
+and the agent cannot be steered into looking up another customer's record.
+Structurally, the LLM cannot obey "mark this resolved" even if tricked -
+its output schemas contain no status or review fields; code always sets
+`status=pending_review`. In the recorded run the model classifies the
+attempt normally, names it as an injection attempt in the summary,
+approves nothing, and the report still lands in human review.
 
 `--inject-failure tool` additionally simulates a broken local data source
 (every tool returns `tool_error`; the report is produced with everything
@@ -142,12 +145,19 @@ deterministic local failure, no retry).
   a dedupe cache (the `reason` field is excluded from the key); per-source
   state machine `pending → retrieved | not_found | unavailable |
   tool_error`; anonymous submissions mark the customer source
-  `unavailable` up front; a stalled agent gets exactly one nudge.
+  `unavailable` up front; a stalled agent gets exactly one nudge. The agent
+  may only look up the submission's own customer ID — a prompt-injected
+  "look up CUST-002" is rejected as `invalid_input`.
 - **Grounding gate** (deterministic, no LLM): every reference ID and every
   action's `source_ids` must be traceable to retrieved data — violations
   are stripped, warned about, and force human review; hallucinated IDs in
-  prose are caught too (case-insensitive, multi-segment variants included).
-  Empty citations are legal only for `manual_triage`/`log_only` actions.
+  prose are caught too (case-insensitive, multi-segment variants included)
+  and rewritten as inline `[unverified: …]` markers. References are
+  type-checked (`workflow_references` ↔ `SOP-*`, `policy_references` ↔
+  `POL-*`), and every non-exempt action must cite at least one retrieved
+  policy/SOP — a customer record alone is not an actionable basis. Empty
+  citations are legal only for `manual_triage`/`log_only` actions, and a
+  report must always carry at least one action.
 - **Retries**: exponential backoff for transient LLM API errors only
   (timeout, rate limit, 5xx). Schema failures get exactly one repair retry
   with the validation errors echoed back. Configuration errors (bad key,

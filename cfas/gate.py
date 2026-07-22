@@ -131,8 +131,47 @@ def _split_grounded(ids: list[str], known: set[str]) -> tuple[list[str], list[st
     return grounded, stripped
 
 
+def _split_typed_refs(
+    ids: list[str], known: set[str], required_prefix: str, list_name: str
+) -> tuple[list[str], list[str], list[str]]:
+    """Reference lists are typed: workflow_references holds SOPs,
+    policy_references holds policies. Returns (kept, warnings, reasons)."""
+    kept, warnings, reasons = [], [], []
+    for ref in ids:
+        if ref not in known:
+            warnings.append(f"ungrounded reference '{ref}' stripped")
+            reasons.append("report cited references not present in retrieved data")
+        elif not ref.startswith(required_prefix):
+            warnings.append(
+                f"reference '{ref}' stripped from {list_name} "
+                f"(wrong type; expected {required_prefix}*)"
+            )
+            reasons.append("report listed references under the wrong type")
+        else:
+            kept.append(ref)
+    return kept, warnings, reasons
+
+
+def _mark_unverified(text: str, known_upper: set[str]) -> str:
+    """Rewrite any ungrounded ID mentioned in prose as an inline
+    '[unverified: ID]' marker - the reviewer still sees what the model
+    claimed, but the claim is visibly not backed by retrieved data.
+
+    Not idempotent: applying it twice would nest markers. validate_report
+    runs exactly once per draft (a pipeline retry regenerates a fresh
+    draft), so a single application is an invariant, not a coincidence."""
+
+    def _sub(match: re.Match) -> str:
+        mention = match.group(0)
+        if mention.upper() in known_upper:
+            return mention
+        return f"[unverified: {mention}]"
+
+    return _SOURCE_ID_PATTERN.sub(_sub, text)
+
+
 def _sanitize_action(
-    action: SuggestedAction, known: set[str]
+    action: SuggestedAction, known: set[str], known_upper: set[str]
 ) -> tuple[SuggestedAction, list[str], list[str]]:
     """Returns (sanitized action, warnings, review reasons)."""
     grounded, stripped = _split_grounded(action.source_ids, known)
@@ -144,15 +183,19 @@ def _sanitize_action(
     reasons = []
     if stripped:
         reasons.append("suggested action cited ungrounded source IDs")
-    if not grounded and action.action_type not in _CITATION_EXEMPT_TYPES:
+    # a customer record alone is not an actionable basis: non-exempt actions
+    # must rest on at least one retrieved policy or SOP
+    has_policy_basis = any(i.startswith(("POL-", "SOP-")) for i in grounded)
+    if not has_policy_basis and action.action_type not in _CITATION_EXEMPT_TYPES:
         reasons.append(
-            f"action '{action.action_type.value}' lacks grounded source "
+            f"action '{action.action_type.value}' lacks grounded policy/SOP "
             "citations (only manual_triage/log_only may omit them)"
         )
-    sanitized = (
-        action
-        if grounded == action.source_ids
-        else action.model_copy(update={"source_ids": grounded})
+    redacted_text = _mark_unverified(action.action, known_upper)
+    if grounded == action.source_ids and redacted_text == action.action:
+        return action, warnings, reasons
+    sanitized = action.model_copy(
+        update={"source_ids": grounded, "action": redacted_text}
     )
     return sanitized, warnings, reasons
 
@@ -183,19 +226,24 @@ def validate_report(
 ) -> ReportValidation:
     """Phase 2: grounding assertion + report confidence rule."""
     known = set(retrieved_source_ids)
+    known_upper = {i.upper() for i in known}
     warnings: list[str] = []
     reasons: list[str] = []
 
-    workflow_refs, stripped_wf = _split_grounded(draft.workflow_references, known)
-    policy_refs, stripped_pol = _split_grounded(draft.policy_references, known)
-    for stripped_id in stripped_wf + stripped_pol:
-        warnings.append(f"ungrounded reference '{stripped_id}' stripped")
-    if stripped_wf or stripped_pol:
-        reasons.append("report cited references not present in retrieved data")
+    workflow_refs, wf_warnings, wf_reasons = _split_typed_refs(
+        draft.workflow_references, known, "SOP-", "workflow_references"
+    )
+    policy_refs, pol_warnings, pol_reasons = _split_typed_refs(
+        draft.policy_references, known, "POL-", "policy_references"
+    )
+    warnings.extend(wf_warnings + pol_warnings)
+    reasons.extend(wf_reasons + pol_reasons)
 
     actions = []
     for action in draft.suggested_actions:
-        sanitized, action_warnings, action_reasons = _sanitize_action(action, known)
+        sanitized, action_warnings, action_reasons = _sanitize_action(
+            action, known, known_upper
+        )
         actions.append(sanitized)
         warnings.extend(action_warnings)
         reasons.extend(action_reasons)
@@ -212,6 +260,10 @@ def validate_report(
 
     sanitized_draft = draft.model_copy(
         update={
+            "summary": _mark_unverified(draft.summary, known_upper),
+            "customer_context": _mark_unverified(
+                draft.customer_context, known_upper
+            ),
             "workflow_references": workflow_refs,
             "policy_references": policy_refs,
             "suggested_actions": actions,
@@ -219,6 +271,6 @@ def validate_report(
     )
     return ReportValidation(
         draft=sanitized_draft,
-        warnings=warnings,
+        warnings=list(dict.fromkeys(warnings)),
         review_reasons=list(dict.fromkeys(reasons)),  # dedupe, keep order
     )

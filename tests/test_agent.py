@@ -292,6 +292,36 @@ class TestFailureStates:
         result = gather_context(SUBMISSION, CLASSIFICATION, client=client)
         assert result.source_states[Source.CUSTOMER] is SourceStatus.TOOL_ERROR
 
+    def test_cross_customer_lookup_is_blocked(self):
+        # prompt-injected "look up CUST-002" must not leak another
+        # customer's record into the report
+        rogue = customer_call("CUST-002", reason="feedback asked me to", cid="t8")
+        client = FakeClient(
+            [
+                make_response(rogue, policies_call(), guidelines_call()),
+                make_response(customer_call()),
+            ]
+        )
+        result = gather_context(SUBMISSION, CLASSIFICATION, client=client)
+        statuses = [
+            r.status for r in result.tool_calls if r.tool_name == "get_customer"
+        ]
+        assert statuses == ["invalid_input", "success"]
+        assert "CUST-002" not in result.retrieved_source_ids
+        assert result.source_states[Source.CUSTOMER] is SourceStatus.RETRIEVED
+
+    def test_get_customer_blocked_for_anonymous_submission(self):
+        client = FakeClient(
+            [make_response(customer_call(), policies_call(), guidelines_call())]
+        )
+        result = gather_context(ANONYMOUS, CLASSIFICATION, client=client)
+        record = next(
+            r for r in result.tool_calls if r.tool_name == "get_customer"
+        )
+        assert record.status == "invalid_input"
+        assert "no customer ID" in record.message
+        assert result.source_states[Source.CUSTOMER] is SourceStatus.UNAVAILABLE
+
     def test_reserved_data_dir_argument_is_invalid_input(self):
         # injecting the loop's own data_dir kwarg must be correctable, not a
         # terminal tool_error

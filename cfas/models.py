@@ -17,10 +17,15 @@ Design principles:
   mutating shared state.
 """
 
+import re
 from datetime import datetime
 from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+# Mock-data convention; validated at intake so arbitrary strings (or
+# prompt-injection payloads) can never ride along as a customer ID.
+CUSTOMER_ID_PATTERN = re.compile(r"^CUST-\d{3}$")
 
 
 class Channel(StrEnum):
@@ -104,6 +109,15 @@ class FeedbackSubmission(BaseModel):
             return value.strip() or None
         return value
 
+    @field_validator("customer_id", mode="after")
+    @classmethod
+    def _customer_id_matches_convention(cls, value: str | None) -> str | None:
+        if value is not None and not CUSTOMER_ID_PATTERN.fullmatch(value):
+            raise ValueError(
+                "customer_id must match 'CUST-NNN' (e.g. CUST-001)"
+            )
+        return value
+
 
 class Classification(BaseModel):
     """LLM-facing schema for the classification step."""
@@ -147,7 +161,9 @@ class ReportDraft(BaseModel):
     customer_context: str
     workflow_references: list[str]
     policy_references: list[str]
-    suggested_actions: list[SuggestedAction]
+    # at least one action always - "log_only"/"manual_triage" exist
+    # precisely so there is never a reason to return none
+    suggested_actions: list[SuggestedAction] = Field(min_length=1)
     confidence: float = Field(ge=0.0, le=1.0)
 
 

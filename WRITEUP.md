@@ -35,9 +35,12 @@ explicit and testable. All 181 tests run offline against scripted fakes.
 
 **Grounding as an assertion, not an aspiration.** The gate checks that
 every reference ID, every action's `source_ids`, and every ID mentioned in
-prose is traceable to retrieved data; violations are stripped, warned, and
-force review. "No citation" is only legal for `manual_triage`/`log_only`
-actions — checked by enum, not by parsing text.
+prose is traceable to retrieved data; violations are stripped from
+citations, rewritten as inline `[unverified: …]` markers in prose, warned,
+and force review. References are type-checked (SOPs vs policies), and a
+non-exempt action must rest on at least one retrieved policy/SOP. "No
+citation" is only legal for `manual_triage`/`log_only` actions — checked
+by enum, not by parsing text.
 
 ## What production-ready would add
 

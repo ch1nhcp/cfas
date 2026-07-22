@@ -10,6 +10,7 @@
   shared by the classification and report stages.
 """
 
+import html
 from typing import TypeVar
 
 import anthropic
@@ -25,13 +26,17 @@ def render_submission_block(
     submission: FeedbackSubmission, customer_line: str | None = None
 ) -> str:
     """Uniform prompt rendering of a submission: metadata plus the feedback
-    text wrapped as untrusted content (every stage prompt shares this)."""
+    text wrapped as untrusted content (every stage prompt shares this).
+
+    The feedback is HTML-escaped so embedded </customer_feedback> tags (or
+    any other markup) cannot break out of the delimiters."""
     customer = customer_line or submission.customer_id or "not provided"
+    safe_feedback = html.escape(submission.feedback_text, quote=False)
     return (
         f"Channel: {submission.channel.value}\n"
         f"Customer ID: {customer}\n"
         f"Received at: {submission.timestamp.isoformat()}\n\n"
-        f"<customer_feedback>\n{submission.feedback_text}\n</customer_feedback>"
+        f"<customer_feedback>\n{safe_feedback}\n</customer_feedback>"
     )
 
 
@@ -49,6 +54,8 @@ _UNSUPPORTED_SCHEMA_KEYS = {
     "multipleOf",
     "minLength",
     "maxLength",
+    "minItems",
+    "maxItems",
 }
 
 

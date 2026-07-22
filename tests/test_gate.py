@@ -126,6 +126,24 @@ class TestValidateReportGrounding:
         v = validate_report(draft, RETRIEVED_IDS)
         assert any("citation" in r for r in v.review_reasons)
 
+    def test_wrong_type_reference_is_stripped(self):
+        # a grounded POL id still does not belong in workflow_references
+        draft = make_draft(
+            workflow_references=["SOP-BILLING-001", "POL-REFUND-001"]
+        )
+        v = validate_report(draft, RETRIEVED_IDS)
+        assert v.draft.workflow_references == ["SOP-BILLING-001"]
+        assert any("wrong type" in w for w in v.warnings)
+        assert any("wrong type" in r for r in v.review_reasons)
+
+    def test_action_citing_only_customer_record_forces_review(self):
+        draft = make_draft(
+            suggested_actions=[make_action(source_ids=["CUST-001"])]
+        )
+        v = validate_report(draft, RETRIEVED_IDS)
+        assert v.draft.suggested_actions[0].source_ids == ["CUST-001"]  # kept
+        assert any("policy/SOP" in r for r in v.review_reasons)
+
     def test_ungrounded_id_in_free_text_is_flagged(self):
         draft = make_draft(
             summary="Refund per POL-REFUND-999 as discussed."
@@ -133,6 +151,24 @@ class TestValidateReportGrounding:
         v = validate_report(draft, RETRIEVED_IDS)
         assert any("POL-REFUND-999" in w for w in v.warnings)
         assert v.review_reasons
+
+    def test_ungrounded_id_in_prose_is_marked_unverified(self):
+        draft = make_draft(
+            summary="Refund per POL-REFUND-999 as discussed.",
+            customer_context="See CUST-777 history.",
+            suggested_actions=[
+                make_action(action="Apply POL-GHOST-001 and POL-REFUND-001.")
+            ],
+        )
+        v = validate_report(draft, RETRIEVED_IDS)
+        assert "[unverified: POL-REFUND-999]" in v.draft.summary
+        assert "[unverified: CUST-777]" in v.draft.customer_context
+        action_text = v.draft.suggested_actions[0].action
+        assert "[unverified: POL-GHOST-001]" in action_text
+        assert "[unverified: POL-REFUND-001]" not in action_text  # grounded
+        # original draft untouched
+        assert "POL-REFUND-999" in draft.summary
+        assert "[unverified" not in draft.summary
 
     def test_multi_segment_hallucinated_id_is_caught(self):
         draft = make_draft(summary="Apply POL-REFUND-V2-001 here.")

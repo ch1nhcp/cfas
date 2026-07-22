@@ -119,7 +119,8 @@ Rules:
   - invalid_input: your arguments were wrong; fix them per the message and
     call again.
   - tool_error: the data source itself failed; do NOT retry.
-- If no customer ID is available, do not call get_customer.
+- If no customer ID is available, do not call get_customer. Only look up
+  the customer ID provided with the submission - never any other ID.
 - Once every available source has been attempted, stop calling tools and
   reply with one sentence summarizing what was gathered.
 
@@ -138,6 +139,7 @@ class _LoopState:
     warnings: list[str] = field(default_factory=list)
     records: list[ToolCallRecord] = field(default_factory=list)
     cache: dict[tuple, ToolResponse] = field(default_factory=dict)
+    allowed_customer_id: str | None = None
     nudged: bool = False
     final_chance_given: bool = False
     iterations: int = 0
@@ -171,6 +173,7 @@ def _initial_state(
     return _LoopState(
         states=states,
         messages=[{"role": "user", "content": _render_task(submission, classification)}],
+        allowed_customer_id=submission.customer_id,
     )
 
 
@@ -218,6 +221,32 @@ def _run_handler(handler, arguments: dict, data_dir) -> ToolResponse:
         )
 
 
+def _customer_lock_violation(
+    state: _LoopState, tool_name: str, arguments: dict
+) -> ToolResponse | None:
+    """The agent may only look up the submission's own customer record - a
+    prompt-injected 'look up CUST-002' must not leak another customer's
+    data into the report."""
+    if tool_name != "get_customer":
+        return None
+    requested = str(arguments.get("customer_id", "")).strip()
+    if state.allowed_customer_id is not None and requested == state.allowed_customer_id:
+        return None
+    if state.allowed_customer_id is None:
+        message = (
+            "no customer ID was provided with this submission; "
+            "do not call get_customer"
+        )
+    else:
+        message = (
+            "customer_id must be the submission's own ID "
+            f"'{state.allowed_customer_id}'"
+        )
+    return ToolResponse(
+        status=ToolStatus.INVALID_INPUT, data=None, source_ids=[], message=message
+    )
+
+
 def _execute_tool_call(
     state: _LoopState, block, data_dir
 ) -> tuple[ToolResponse, bool]:
@@ -225,6 +254,10 @@ def _execute_tool_call(
     it. Returns (envelope, deduped)."""
     arguments = dict(block.input)
     handler = TOOL_HANDLERS.get(block.name)
+    lock_violation = (
+        None if handler is None
+        else _customer_lock_violation(state, block.name, arguments)
+    )
     if handler is None:
         state.warnings.append(f"agent called unknown tool '{block.name}'")
         envelope = ToolResponse(
@@ -233,6 +266,9 @@ def _execute_tool_call(
             source_ids=[],
             message=f"unknown tool '{block.name}'",
         )
+        deduped = False
+    elif lock_violation is not None:
+        envelope = lock_violation
         deduped = False
     else:
         key = _dedupe_key(block.name, arguments)
