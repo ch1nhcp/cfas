@@ -10,6 +10,7 @@ MODEL_ID = "claude-opus-4-8"
 
 CLASSIFY_MAX_TOKENS = 1024
 AGENT_MAX_TOKENS = 2048
+REPORT_MAX_TOKENS = 4096
 
 # Timeout for LLM API calls only; local JSON-backed tools need none.
 LLM_TIMEOUT_SECONDS = 60.0
@@ -22,3 +23,8 @@ MAX_TOOL_ITERATIONS = 6
 # rule; the LLM's own is_ambiguous flag is only ever OR-ed in, never trusted
 # to clear the flag).
 AMBIGUITY_THRESHOLD = 0.65
+
+# report.confidence below this forces human review (distinct from the
+# classification threshold: a confident classification with poor retrieval
+# still yields a low-confidence report).
+REPORT_CONFIDENCE_THRESHOLD = 0.70
