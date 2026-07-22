@@ -1,0 +1,58 @@
+[
+  {
+    "policy_id": "POL-REFUND-001",
+    "name": "Refund and Billing Adjustment Policy",
+    "applicable_categories": ["billing_complaint"],
+    "rules": [
+      "Duplicate or erroneous charges are refunded in full within 5 business days once verified against the billing system.",
+      "Refund requests must be raised within 60 days of the charge date.",
+      "Premium and enterprise customers are eligible for expedited refund processing (48 hours).",
+      "Partial refunds for unused subscription periods are pro-rated to the day of cancellation."
+    ],
+    "last_updated": "2026-04-01"
+  },
+  {
+    "policy_id": "POL-SLA-001",
+    "name": "Support Response SLA",
+    "applicable_categories": ["bug_report", "billing_complaint"],
+    "rules": [
+      "High-urgency issues: first response within 4 business hours for enterprise and premium customers, 8 business hours for others.",
+      "Confirmed service-impacting bugs must be escalated to engineering within 1 business day.",
+      "Customers must receive a status update at least every 48 hours while a high-urgency ticket is open."
+    ],
+    "last_updated": "2026-02-15"
+  },
+  {
+    "policy_id": "POL-ESCALATION-001",
+    "name": "Escalation Rules",
+    "applicable_categories": ["bug_report", "churn_risk", "abuse_policy_violation"],
+    "rules": [
+      "Enterprise accounts reporting service-impacting issues escalate directly to their dedicated account team.",
+      "Any credible churn signal from a premium or enterprise account is routed to the retention team within 24 hours.",
+      "Abuse reports involving threats or harassment are escalated to Trust & Safety immediately."
+    ],
+    "last_updated": "2026-05-20"
+  },
+  {
+    "policy_id": "POL-ABUSE-001",
+    "name": "Acceptable Use and Abuse Handling Policy",
+    "applicable_categories": ["abuse_policy_violation"],
+    "rules": [
+      "Feedback containing threats, harassment, or hate speech is logged verbatim and routed to Trust & Safety.",
+      "CS officers do not engage with abusive content beyond a single standard acknowledgement.",
+      "Repeated violations may lead to account suspension under the acceptable use terms."
+    ],
+    "last_updated": "2026-01-10"
+  },
+  {
+    "policy_id": "POL-RETENTION-001",
+    "name": "Customer Retention Offers Policy",
+    "applicable_categories": ["churn_risk"],
+    "rules": [
+      "Retention discounts of up to 20% (premium) or 30% (enterprise) may be offered; larger discounts require team-lead approval.",
+      "A retention offer is limited to one per customer per rolling 12 months.",
+      "Retention offers are not extended to accounts with an open abuse violation."
+    ],
+    "last_updated": "2026-06-05"
+  }
+]

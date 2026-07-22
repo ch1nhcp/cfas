@@ -1,0 +1,67 @@
+[
+  {
+    "guideline_id": "SOP-BILLING-001",
+    "category": "billing_complaint",
+    "title": "Handling billing complaints",
+    "required_steps": [
+      "Verify the disputed charge against the customer's order history in the billing system.",
+      "Check refund eligibility under POL-REFUND-001 (charge within 60 days).",
+      "If a duplicate or erroneous charge is confirmed, initiate the refund and tell the customer the processing timeline.",
+      "Log the resolution and link the transaction ID to the ticket."
+    ]
+  },
+  {
+    "guideline_id": "SOP-BUG-001",
+    "category": "bug_report",
+    "title": "Handling bug reports",
+    "required_steps": [
+      "Collect reproduction steps, affected environment, and impact scope from the report.",
+      "Check the known-issues list before filing a new engineering ticket.",
+      "Apply POL-SLA-001 response times based on urgency and customer tier.",
+      "Escalate service-impacting bugs to engineering per POL-ESCALATION-001."
+    ]
+  },
+  {
+    "guideline_id": "SOP-FEATURE-001",
+    "category": "feature_request",
+    "title": "Handling feature requests",
+    "required_steps": [
+      "Acknowledge the request and confirm the underlying use case with the customer.",
+      "Check the product roadmap/feature backlog for an existing matching request.",
+      "Record the request with customer tier and use case attached; link the customer for follow-up.",
+      "Do not commit to delivery dates; share only publicly announced roadmap items."
+    ]
+  },
+  {
+    "guideline_id": "SOP-CHURN-001",
+    "category": "churn_risk",
+    "title": "Handling churn-risk signals",
+    "required_steps": [
+      "Identify the driver of dissatisfaction from the feedback and recent ticket history.",
+      "Route premium/enterprise churn signals to the retention team within 24 hours per POL-ESCALATION-001.",
+      "Check retention-offer eligibility under POL-RETENTION-001 before proposing any discount.",
+      "Schedule a follow-up touchpoint and record the outcome on the account."
+    ]
+  },
+  {
+    "guideline_id": "SOP-ABUSE-001",
+    "category": "abuse_policy_violation",
+    "title": "Handling abusive or policy-violating feedback",
+    "required_steps": [
+      "Do not respond in kind; send at most one standard acknowledgement per POL-ABUSE-001.",
+      "Preserve the original message verbatim for the Trust & Safety record.",
+      "Escalate immediately to Trust & Safety per POL-ESCALATION-001 if threats or harassment are present.",
+      "Flag the account for review of repeated violations."
+    ]
+  },
+  {
+    "guideline_id": "SOP-PRAISE-001",
+    "category": "praise",
+    "title": "Handling praise and positive feedback",
+    "required_steps": [
+      "Thank the customer with a short personalized reply.",
+      "Log the feedback against the account; tag the praised feature or team.",
+      "With the customer's consent, forward quotable feedback to marketing."
+    ]
+  }
+]

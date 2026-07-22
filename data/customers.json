@@ -1,0 +1,139 @@
+[
+  {
+    "customer_id": "CUST-001",
+    "name": "Alice Nguyen",
+    "email": "alice.nguyen@example.com",
+    "tier": "premium",
+    "tenure_months": 28,
+    "past_tickets": [
+      {
+        "ticket_id": "TCK-1041",
+        "category": "billing_complaint",
+        "status": "resolved",
+        "opened_at": "2026-03-14",
+        "summary": "Charged after applying annual discount code"
+      },
+      {
+        "ticket_id": "TCK-1187",
+        "category": "bug_report",
+        "status": "resolved",
+        "opened_at": "2026-05-02",
+        "summary": "Export to CSV producing empty files"
+      }
+    ],
+    "orders": [
+      {
+        "order_id": "ORD-9001",
+        "description": "Premium annual plan",
+        "amount_usd": 348.0,
+        "date": "2025-11-20",
+        "status": "active"
+      },
+      {
+        "order_id": "ORD-9455",
+        "description": "Add-on: 3 extra seats",
+        "amount_usd": 87.0,
+        "date": "2026-04-11",
+        "status": "active"
+      }
+    ]
+  },
+  {
+    "customer_id": "CUST-002",
+    "name": "Bravo Logistics Ltd.",
+    "email": "ops@bravologistics.example.com",
+    "tier": "enterprise",
+    "tenure_months": 41,
+    "past_tickets": [
+      {
+        "ticket_id": "TCK-0873",
+        "category": "bug_report",
+        "status": "open",
+        "opened_at": "2026-06-28",
+        "summary": "Webhook deliveries delayed during peak hours"
+      },
+      {
+        "ticket_id": "TCK-0512",
+        "category": "feature_request",
+        "status": "resolved",
+        "opened_at": "2025-12-09",
+        "summary": "Requested SSO via Okta"
+      }
+    ],
+    "orders": [
+      {
+        "order_id": "ORD-7210",
+        "description": "Enterprise plan, 250 seats, annual",
+        "amount_usd": 24000.0,
+        "date": "2026-01-15",
+        "status": "active"
+      }
+    ]
+  },
+  {
+    "customer_id": "CUST-003",
+    "name": "Carlos Mendes",
+    "email": "carlos.mendes@example.com",
+    "tier": "free",
+    "tenure_months": 2,
+    "past_tickets": [],
+    "orders": []
+  },
+  {
+    "customer_id": "CUST-004",
+    "name": "Dana Whitfield",
+    "email": "dana.whitfield@example.com",
+    "tier": "standard",
+    "tenure_months": 14,
+    "past_tickets": [
+      {
+        "ticket_id": "TCK-1290",
+        "category": "billing_complaint",
+        "status": "resolved",
+        "opened_at": "2026-06-03",
+        "summary": "Asked for invoice with corrected company address"
+      }
+    ],
+    "orders": [
+      {
+        "order_id": "ORD-8654",
+        "description": "Standard monthly plan",
+        "amount_usd": 29.0,
+        "date": "2026-07-01",
+        "status": "active"
+      }
+    ]
+  },
+  {
+    "customer_id": "CUST-005",
+    "name": "Eastgate Media GmbH",
+    "email": "it@eastgatemedia.example.com",
+    "tier": "enterprise",
+    "tenure_months": 19,
+    "past_tickets": [
+      {
+        "ticket_id": "TCK-1322",
+        "category": "churn_risk",
+        "status": "open",
+        "opened_at": "2026-07-10",
+        "summary": "Asked about downgrade options and data export"
+      },
+      {
+        "ticket_id": "TCK-1105",
+        "category": "bug_report",
+        "status": "resolved",
+        "opened_at": "2026-04-22",
+        "summary": "Dashboard widgets not loading on Safari"
+      }
+    ],
+    "orders": [
+      {
+        "order_id": "ORD-7788",
+        "description": "Enterprise plan, 80 seats, annual",
+        "amount_usd": 9600.0,
+        "date": "2025-09-30",
+        "status": "active"
+      }
+    ]
+  }
+]
