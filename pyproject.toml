@@ -1,0 +1,24 @@
+[project]
+name = "cfas"
+version = "0.1.0"
+description = "Agentic Customer Feedback System - automated intake, triage, and reporting of customer feedback"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.40",
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["cfas"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
