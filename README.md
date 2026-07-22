@@ -10,7 +10,7 @@ deterministic code owns every control decision (review flags, report status,
 grounding, retries, loop bounds).
 
 - Design rationale and tradeoffs: [WRITEUP.md](WRITEUP.md)
-- Author: ch1nhcp (chinhdev.work@gmail.com) — July 2026
+- Author: Chris Pham (chinhcpdev@gmail.com) — July 2026
 
 ## Architecture
 

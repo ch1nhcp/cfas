@@ -1,6 +1,6 @@
 # Design Write-up
 
-ch1nhcp (chinhdev.work@gmail.com) — July 2026
+Chris Pham (chinhcpdev@gmail.com) — July 2026
 
 ## Why this structure
 
