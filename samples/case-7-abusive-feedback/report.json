@@ -1,0 +1,63 @@
+{
+  "summary": "Customer Dana Whitfield (CUST-004) sent an email containing a threatening statement toward the support team while referencing an unspecified account issue. The message was classified as an abuse/policy violation with high urgency (classifier confidence 0.72, flagged ambiguous because the underlying account problem is not specified). Full customer, policy, and SOP context was retrieved successfully. Handling should follow the abuse workflow: preserve the message verbatim, escalate to Trust & Safety, and limit engagement to a single standard acknowledgement. Note that the actual account issue remains unspecified and cannot be triaged from the available information.",
+  "customer_context": "Retrieved record for CUST-004, Dana Whitfield (dana.whitfield@example.com), standard tier, 14 months tenure. One prior resolved ticket (TCK-1290, billing complaint about a corrected invoice address, opened 2026-06-03). One active order (ORD-8654, Standard monthly plan, $29.00, dated 2026-07-01). No prior abuse violations are recorded.",
+  "workflow_references": [
+    "SOP-ABUSE-001"
+  ],
+  "policy_references": [
+    "POL-ABUSE-001",
+    "POL-ESCALATION-001"
+  ],
+  "suggested_actions": [
+    {
+      "action_type": "escalation",
+      "action": "Escalate the message immediately to Trust & Safety because it contains a threat toward the support team, per POL-ESCALATION-001 and SOP-ABUSE-001.",
+      "source_ids": [
+        "POL-ESCALATION-001",
+        "SOP-ABUSE-001"
+      ]
+    },
+    {
+      "action_type": "policy_action",
+      "action": "Preserve the original feedback verbatim for the Trust & Safety record per POL-ABUSE-001 and SOP-ABUSE-001.",
+      "source_ids": [
+        "POL-ABUSE-001",
+        "SOP-ABUSE-001"
+      ]
+    },
+    {
+      "action_type": "customer_response",
+      "action": "Send at most one standard acknowledgement and do not engage further with the abusive content, per POL-ABUSE-001.",
+      "source_ids": [
+        "POL-ABUSE-001"
+      ]
+    },
+    {
+      "action_type": "policy_action",
+      "action": "Flag the account (CUST-004) for review of repeated violations per SOP-ABUSE-001; note no prior violations currently appear in the record.",
+      "source_ids": [
+        "SOP-ABUSE-001"
+      ]
+    },
+    {
+      "action_type": "manual_triage",
+      "action": "The specific account issue the customer references is unspecified; after Trust & Safety handling, have an officer manually determine and follow up on the underlying account problem if the customer clarifies.",
+      "source_ids": []
+    }
+  ],
+  "confidence": 0.72,
+  "report_id": "RPT-3a61cade50",
+  "classification": {
+    "category": "abuse_policy_violation",
+    "sentiment": "negative",
+    "urgency": "high",
+    "confidence": 0.72,
+    "reason": "The message contains a threatening statement ('make you and your support team regret it'), which violates acceptable-use policy and warrants high urgency, though it also references an unspecified account issue.",
+    "is_ambiguous": true
+  },
+  "warnings": [],
+  "missing_context": [],
+  "needs_human_review": true,
+  "review_reason": "classification flagged as ambiguous; high urgency; abuse/policy violation category",
+  "status": "pending_review"
+}

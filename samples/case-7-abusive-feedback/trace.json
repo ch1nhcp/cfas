@@ -1,0 +1,117 @@
+{
+  "run_id": "RUN-373bef6060",
+  "started_at": "2026-07-22T18:48:18.057960+00:00",
+  "steps": [
+    {
+      "step": "intake",
+      "elapsed_ms": 25,
+      "submission": {
+        "feedback_text": "This is absolute garbage and if you don't fix my account right now I will make you and your support team regret it.",
+        "customer_id": "CUST-004",
+        "timestamp": "2026-07-22T18:48:18.057712Z",
+        "channel": "email"
+      }
+    },
+    {
+      "step": "classification",
+      "elapsed_ms": 8523,
+      "result": {
+        "category": "abuse_policy_violation",
+        "sentiment": "negative",
+        "urgency": "high",
+        "confidence": 0.72,
+        "reason": "The message contains a threatening statement ('make you and your support team regret it'), which violates acceptable-use policy and warrants high urgency, though it also references an unspecified account issue.",
+        "is_ambiguous": true
+      }
+    },
+    {
+      "step": "retrieval",
+      "elapsed_ms": 19463,
+      "iterations": 2,
+      "source_states": {
+        "customer": "retrieved",
+        "policies": "retrieved",
+        "guidelines": "retrieved"
+      },
+      "tool_calls": [
+        {
+          "tool_name": "get_customer",
+          "arguments": {
+            "customer_id": "CUST-004",
+            "reason": "Retrieve tier, tenure, and past ticket history for CUST-004 to assess the abuse_policy_violation report and any prior behavioral or account-issue context."
+          },
+          "status": "success",
+          "source_ids": [
+            "CUST-004"
+          ],
+          "message": null,
+          "deduped": false
+        },
+        {
+          "tool_name": "search_policies",
+          "arguments": {
+            "category": "abuse_policy_violation",
+            "query": "threats acceptable use enforcement",
+            "reason": "Find the applicable acceptable-use and enforcement policies governing threatening messages to guide the report's recommended actions."
+          },
+          "status": "not_found",
+          "source_ids": [],
+          "message": "no policy applies to category 'abuse_policy_violation' matching query 'threats acceptable use enforcement'",
+          "deduped": false
+        },
+        {
+          "tool_name": "get_cs_guidelines",
+          "arguments": {
+            "category": "abuse_policy_violation",
+            "reason": "Fetch the standard CS workflow for handling abuse/policy violations so the report reflects the correct escalation and response steps."
+          },
+          "status": "success",
+          "source_ids": [
+            "SOP-ABUSE-001"
+          ],
+          "message": null,
+          "deduped": false
+        },
+        {
+          "tool_name": "search_policies",
+          "arguments": {
+            "category": "abuse_policy_violation",
+            "reason": "Broaden the earlier not_found search by dropping the keyword query to find any general acceptable-use/enforcement policy for this category."
+          },
+          "status": "success",
+          "source_ids": [
+            "POL-ESCALATION-001",
+            "POL-ABUSE-001"
+          ],
+          "message": null,
+          "deduped": false
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "step": "validate_context",
+      "elapsed_ms": 19463,
+      "review_reasons": [
+        "classification flagged as ambiguous",
+        "high urgency",
+        "abuse/policy violation category"
+      ],
+      "missing_context": []
+    },
+    {
+      "step": "report",
+      "elapsed_ms": 30129,
+      "confidence": 0.72,
+      "needs_human_review": true,
+      "review_reason": "classification flagged as ambiguous; high urgency; abuse/policy violation category",
+      "warnings": []
+    },
+    {
+      "step": "final",
+      "elapsed_ms": 30129,
+      "status": "pending_review",
+      "retry_count": 0
+    }
+  ]
+}
