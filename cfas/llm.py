@@ -46,6 +46,11 @@ def default_client() -> anthropic.Anthropic:
     return anthropic.Anthropic(timeout=LLM_TIMEOUT_SECONDS, max_retries=0)
 
 
+# minItems is NOT stripped: verified accepted by the structured-output API
+# (letting the API enforce it avoids unnecessary repair calls; Pydantic
+# still re-validates client-side as the safety net). maxItems is unused
+# and unverified, so it stays stripped - a wrongly-passed constraint would
+# 400 the whole request, which costs far more than a rare repair call.
 _UNSUPPORTED_SCHEMA_KEYS = {
     "minimum",
     "maximum",
@@ -54,7 +59,6 @@ _UNSUPPORTED_SCHEMA_KEYS = {
     "multipleOf",
     "minLength",
     "maxLength",
-    "minItems",
     "maxItems",
 }
 

@@ -50,9 +50,14 @@ class TestStructuredOutputSchema:
     def test_strips_unsupported_constraints_recursively(self):
         schema = structured_output_schema(Sample)
         rendered = str(schema)
-        for key in ("minimum", "maximum", "minLength", "maxLength",
-                    "minItems", "maxItems"):
+        for key in ("minimum", "maximum", "minLength", "maxLength", "maxItems"):
             assert key not in rendered
+
+    def test_min_items_is_kept(self):
+        # verified accepted by the structured-output API; the API enforcing
+        # it saves a repair round-trip
+        schema = structured_output_schema(Sample)
+        assert schema["properties"]["items"]["minItems"] == 1
 
     def test_all_objects_forbid_additional_properties(self):
         schema = structured_output_schema(Sample)

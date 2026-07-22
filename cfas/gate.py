@@ -5,9 +5,11 @@ Computes every human-review rule that is decidable from classification +
 retrieval alone.
 
 Phase 2 - validate_report(): on the LLM-generated draft. The grounding
-assertion lives here: every reference ID in the report - structured fields,
-per-action source_ids, and IDs mentioned in free text - must be a subset of
-what was actually retrieved. Violations are stripped, warned about, and
+assertion lives here, with two strictness levels: structured citations
+(reference lists, per-action source_ids) must be a subset of what was
+DIRECTLY retrieved; prose may additionally mention IDs quoted inside
+retrieved content or the submission's own customer ID. Violations are
+stripped from citations, marked [unverified] in prose, warned about, and
 force human review. Reports are sanitized, never silently trusted.
 
 The report assembly step combines both phases to set the final
@@ -105,13 +107,18 @@ def grounded_id_set(
     retrieval: RetrievalResult,
     submission: FeedbackSubmission | None = None,
 ) -> list[str]:
-    """Every ID a report may legitimately mention:
+    """Every ID a report may legitimately mention IN PROSE:
 
     - IDs of retrieved records (retrieved_source_ids),
     - IDs appearing INSIDE retrieved data (e.g. a policy ID quoted by an
       SOP's required_steps) - quoting retrieved content is not hallucination,
     - the submission's own customer ID - a not-found lookup may honestly be
       named in the report ("no record found for CUST-404").
+
+    This set is for prose checks only. Structured citations (reference
+    lists, action source_ids) are held to the stricter
+    retrieved_source_ids: citing a policy whose content was never actually
+    fetched is not grounding.
     """
     known = list(retrieval.retrieved_source_ids)
     context_json = json.dumps(
@@ -171,7 +178,7 @@ def _mark_unverified(text: str, known_upper: set[str]) -> str:
 
 
 def _sanitize_action(
-    action: SuggestedAction, known: set[str], known_upper: set[str]
+    action: SuggestedAction, known: set[str], prose_known_upper: set[str]
 ) -> tuple[SuggestedAction, list[str], list[str]]:
     """Returns (sanitized action, warnings, review reasons)."""
     grounded, stripped = _split_grounded(action.source_ids, known)
@@ -191,7 +198,7 @@ def _sanitize_action(
             f"action '{action.action_type.value}' lacks grounded policy/SOP "
             "citations (only manual_triage/log_only may omit them)"
         )
-    redacted_text = _mark_unverified(action.action, known_upper)
+    redacted_text = _mark_unverified(action.action, prose_known_upper)
     if grounded == action.source_ids and redacted_text == action.action:
         return action, warnings, reasons
     sanitized = action.model_copy(
@@ -200,11 +207,10 @@ def _sanitize_action(
     return sanitized, warnings, reasons
 
 
-def _scan_free_text(draft: ReportDraft, known: set[str]) -> list[str]:
+def _scan_free_text(draft: ReportDraft, known_upper: set[str]) -> list[str]:
     """IDs mentioned in prose must be grounded too - a hallucinated
     'per POL-XXX-999' inside the summary is as bad as one in a list.
     Comparison is case-insensitive (the pattern matches lowercase too)."""
-    known_upper = {i.upper() for i in known}
     texts = [
         draft.summary,
         draft.customer_context,
@@ -222,11 +228,27 @@ def _scan_free_text(draft: ReportDraft, known: set[str]) -> list[str]:
 
 
 def validate_report(
-    draft: ReportDraft, retrieved_source_ids: list[str]
+    draft: ReportDraft,
+    retrieved_source_ids: list[str],
+    prose_grounded_ids: list[str] | None = None,
 ) -> ReportValidation:
-    """Phase 2: grounding assertion + report confidence rule."""
+    """Phase 2: grounding assertion + report confidence rule.
+
+    Structured citations (reference lists, per-action source_ids) must be a
+    subset of retrieved_source_ids - directly retrieved records only. Prose
+    is checked against prose_grounded_ids (see grounded_id_set; defaults to
+    the strict set), which additionally allows quoting IDs that appear
+    inside retrieved content and the submission's own customer ID.
+    """
     known = set(retrieved_source_ids)
-    known_upper = {i.upper() for i in known}
+    prose_known_upper = {
+        i.upper()
+        for i in (
+            prose_grounded_ids
+            if prose_grounded_ids is not None
+            else retrieved_source_ids
+        )
+    }
     warnings: list[str] = []
     reasons: list[str] = []
 
@@ -242,13 +264,13 @@ def validate_report(
     actions = []
     for action in draft.suggested_actions:
         sanitized, action_warnings, action_reasons = _sanitize_action(
-            action, known, known_upper
+            action, known, prose_known_upper
         )
         actions.append(sanitized)
         warnings.extend(action_warnings)
         reasons.extend(action_reasons)
 
-    for mention in _scan_free_text(draft, known):
+    for mention in _scan_free_text(draft, prose_known_upper):
         warnings.append(f"ungrounded ID '{mention}' mentioned in report text")
         reasons.append("report text mentions ungrounded source IDs")
 
@@ -260,9 +282,9 @@ def validate_report(
 
     sanitized_draft = draft.model_copy(
         update={
-            "summary": _mark_unverified(draft.summary, known_upper),
+            "summary": _mark_unverified(draft.summary, prose_known_upper),
             "customer_context": _mark_unverified(
-                draft.customer_context, known_upper
+                draft.customer_context, prose_known_upper
             ),
             "workflow_references": workflow_refs,
             "policy_references": policy_refs,

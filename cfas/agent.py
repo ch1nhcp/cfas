@@ -121,6 +121,10 @@ Rules:
   - tool_error: the data source itself failed; do NOT retry.
 - If no customer ID is available, do not call get_customer. Only look up
   the customer ID provided with the submission - never any other ID.
+- Always query policies and guidelines for the classified category first;
+  lookups for other categories are allowed as supplements, but the
+  classified category itself must be attempted before the source counts
+  as covered.
 - Once every available source has been attempted, stop calling tools and
   reply with one sentence summarizing what was gathered.
 
@@ -134,6 +138,7 @@ class _LoopState:
 
     states: dict[Source, SourceStatus]
     messages: list[dict]
+    primary_category: str = ""
     context: dict[Source, list] = field(default_factory=lambda: {s: [] for s in Source})
     retrieved_ids: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -173,6 +178,7 @@ def _initial_state(
     return _LoopState(
         states=states,
         messages=[{"role": "user", "content": _render_task(submission, classification)}],
+        primary_category=classification.category.value,
         allowed_customer_id=submission.customer_id,
     )
 
@@ -293,24 +299,38 @@ def _execute_tool_call(
     return envelope, deduped
 
 
-def _apply_transition(state: _LoopState, tool_name: str, envelope: ToolResponse) -> None:
+def _apply_transition(
+    state: _LoopState, tool_name: str, arguments: dict, envelope: ToolResponse
+) -> None:
     """Monotone state update: success always wins; failures only move a
-    source out of pending (a later broadened search may still succeed)."""
+    source out of pending (a later broadened search may still succeed).
+
+    For the category-driven sources (policies, guidelines), only a call for
+    the PRIMARY classified category completes the source: cross-category
+    results are collected as supplementary context but cannot substitute
+    for the primary lookup - billing feedback backed solely by bug-report
+    policies is missing context, not grounded context."""
     source = SOURCE_BY_TOOL.get(tool_name)
     if source is None:
         return
+    is_category_source = source in (Source.POLICIES, Source.GUIDELINES)
+    on_primary = not is_category_source or (
+        str(arguments.get("category", "")).strip() == state.primary_category
+    )
     if envelope.status is ToolStatus.SUCCESS:
-        state.states[source] = SourceStatus.RETRIEVED
+        # data and IDs are always collected, primary or not
         state.context[source].append(envelope.data)
         for source_id in envelope.source_ids:
             if source_id not in state.retrieved_ids:
                 state.retrieved_ids.append(source_id)
+        if on_primary:
+            state.states[source] = SourceStatus.RETRIEVED
     elif state.states[source] is SourceStatus.PENDING:
-        if envelope.status is ToolStatus.NOT_FOUND:
+        if envelope.status is ToolStatus.NOT_FOUND and on_primary:
             state.states[source] = SourceStatus.NOT_FOUND
         elif envelope.status is ToolStatus.TOOL_ERROR:
             state.states[source] = SourceStatus.TOOL_ERROR
-        # invalid_input: stays pending so the agent can correct its arguments
+        # invalid_input (and cross-category not_found): stays pending
 
 
 def _handle_stall(state: _LoopState, response) -> bool:
@@ -353,7 +373,7 @@ def _process_response(state: _LoopState, response, data_dir) -> bool:
     for block in tool_uses:
         envelope, deduped = _execute_tool_call(state, block, data_dir)
         if not deduped:  # a cache hit must not re-append context data
-            _apply_transition(state, block.name, envelope)
+            _apply_transition(state, block.name, dict(block.input), envelope)
         result_blocks.append(
             {
                 "type": "tool_result",

@@ -147,11 +147,15 @@ deterministic local failure, no retry).
   tool_error`; anonymous submissions mark the customer source
   `unavailable` up front; a stalled agent gets exactly one nudge. The agent
   may only look up the submission's own customer ID — a prompt-injected
-  "look up CUST-002" is rejected as `invalid_input`.
+  "look up CUST-002" is rejected as `invalid_input`. Cross-category
+  policy/SOP lookups are allowed as supplements, but the classified
+  category itself must be attempted before the source counts as covered.
 - **Grounding gate** (deterministic, no LLM): every reference ID and every
-  action's `source_ids` must be traceable to retrieved data — violations
-  are stripped, warned about, and force human review; hallucinated IDs in
-  prose are caught too (case-insensitive, multi-segment variants included)
+  action's `source_ids` must be **directly retrieved** — violations are
+  stripped, warned about, and force human review. Prose is checked against
+  a slightly broader set (IDs quoted inside retrieved content and the
+  submission's own customer ID are legitimate mentions); hallucinated IDs
+  in prose are caught (case-insensitive, multi-segment variants included)
   and rewritten as inline `[unverified: …]` markers. References are
   type-checked (`workflow_references` ↔ `SOP-*`, `policy_references` ↔
   `POL-*`), and every non-exempt action must cite at least one retrieved
@@ -183,7 +187,7 @@ updated, record = apply_review(report, ReviewDecision.APPROVE, reviewer_id="cs-7
 ## Tests
 
 ```bash
-.venv/bin/python -m pytest              # 181 tests, no network needed
+.venv/bin/python -m pytest              # 194 tests, no network needed
 .venv/bin/python -m pytest --cov=cfas   # coverage (99%)
 ```
 

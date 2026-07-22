@@ -204,7 +204,9 @@ def generate_report(
         ReportGenerationError,
     )
     report_validation = validate_report(
-        draft, grounded_id_set(retrieval, submission)
+        draft,
+        retrieval.retrieved_source_ids,
+        grounded_id_set(retrieval, submission),
     )
     return _assemble(
         report_id=report_id or f"RPT-{uuid.uuid4().hex[:10]}",

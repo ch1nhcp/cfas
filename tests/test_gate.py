@@ -208,9 +208,38 @@ class TestGroundedIdSet:
         draft = make_draft(
             customer_context="No customer record found for CUST-404."
         )
-        v = validate_report(draft, grounded_id_set(make_retrieval(), submission))
+        v = validate_report(
+            draft,
+            RETRIEVED_IDS,
+            grounded_id_set(make_retrieval(), submission),
+        )
         assert v.review_reasons == []
         assert v.warnings == []
+
+
+class TestStrictVsProseGrounding:
+    """Structured citations require direct retrieval; prose may quote IDs
+    that merely appear inside retrieved content."""
+
+    PROSE_IDS = RETRIEVED_IDS + ["POL-ESCALATION-001"]  # quoted in SOP text
+
+    def test_prose_grounded_id_cannot_be_cited_structurally(self):
+        draft = make_draft(
+            policy_references=["POL-REFUND-001", "POL-ESCALATION-001"],
+            summary="Escalate per POL-ESCALATION-001 if unresolved.",
+        )
+        v = validate_report(draft, RETRIEVED_IDS, self.PROSE_IDS)
+        assert v.draft.policy_references == ["POL-REFUND-001"]  # stripped
+        assert any("POL-ESCALATION-001" in w for w in v.warnings)
+        assert "[unverified" not in v.draft.summary  # prose mention is fine
+
+    def test_action_citing_prose_only_id_forces_review(self):
+        draft = make_draft(
+            suggested_actions=[make_action(source_ids=["POL-ESCALATION-001"])]
+        )
+        v = validate_report(draft, RETRIEVED_IDS, self.PROSE_IDS)
+        assert v.draft.suggested_actions[0].source_ids == []
+        assert any("policy/SOP" in r for r in v.review_reasons)
 
 
 class TestCaseInsensitiveScan:

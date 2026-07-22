@@ -292,6 +292,35 @@ class TestFailureStates:
         result = gather_context(SUBMISSION, CLASSIFICATION, client=client)
         assert result.source_states[Source.CUSTOMER] is SourceStatus.TOOL_ERROR
 
+    def test_cross_category_success_does_not_complete_the_source(self):
+        # supplementary cross-category data is collected, but only the
+        # classified category completes the policies source
+        cross = policies_call(category="bug_report", reason="related angle", cid="t8")
+        client = FakeClient(
+            [
+                make_response(customer_call(), cross, guidelines_call()),
+                make_response(policies_call()),  # primary category
+            ]
+        )
+        result = gather_context(SUBMISSION, CLASSIFICATION, client=client)
+        assert result.source_states[Source.POLICIES] is SourceStatus.RETRIEVED
+        assert result.iterations == 2
+        assert "POL-ESCALATION-001" in result.retrieved_source_ids  # cross data kept
+        assert "POL-REFUND-001" in result.retrieved_source_ids  # primary data
+
+    def test_never_attempting_primary_category_yields_missing_context(self):
+        cross = policies_call(category="bug_report", reason="wrong angle", cid="t8")
+        client = FakeClient(
+            [
+                make_response(cross, guidelines_call()),
+                make_text_response("Done."),  # stall -> nudge (policies pending)
+                make_text_response("Still done."),  # second stall -> exit
+            ]
+        )
+        result = gather_context(ANONYMOUS, CLASSIFICATION, client=client)
+        assert result.source_states[Source.POLICIES] is SourceStatus.PENDING
+        assert any("policies" in note for note in result.missing_context)
+
     def test_cross_customer_lookup_is_blocked(self):
         # prompt-injected "look up CUST-002" must not leak another
         # customer's record into the report
