@@ -1,0 +1,25 @@
+{
+  "summary": "Automated processing failed; no report could be generated. Cause: InjectedLLMFailure: injected LLM failure",
+  "customer_context": "not gathered (processing failed)",
+  "workflow_references": [],
+  "policy_references": [],
+  "suggested_actions": [
+    {
+      "action_type": "manual_triage",
+      "action": "Route this feedback to manual triage.",
+      "source_ids": []
+    }
+  ],
+  "confidence": 0.0,
+  "report_id": "RPT-f21eeca111",
+  "classification": null,
+  "warnings": [
+    "processing failed: InjectedLLMFailure: injected LLM failure"
+  ],
+  "missing_context": [
+    "pipeline did not complete context gathering/reporting"
+  ],
+  "needs_human_review": true,
+  "review_reason": "processing failed: InjectedLLMFailure: injected LLM failure",
+  "status": "processing_failed"
+}

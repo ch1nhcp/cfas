@@ -1,0 +1,46 @@
+{
+  "summary": "Customer CUST-004 (Dana Whitfield) submitted vague web_form feedback mentioning a possible billing issue and an unspecified app problem. The classification flags this as 'other', negative sentiment, medium urgency, and explicitly ambiguous (confidence 0.3). Retrieved context includes the customer record (CUST-004) and the General Feedback Handling Policy (POL-FEEDBACK-001). No workflow/SOP guidelines were retrieved, and no billing-specific policy is available, so no grounded billing resolution can be provided. The feedback is too vague to determine a specific issue, and required detail is missing.",
+  "customer_context": "Dana Whitfield (CUST-004), standard tier, 14 months tenure. One past ticket TCK-1290 (billing_complaint, resolved) regarding an invoice with corrected company address. Active order ORD-8654: Standard monthly plan, $29.00, dated 2026-07-01.",
+  "workflow_references": [],
+  "policy_references": [
+    "POL-FEEDBACK-001"
+  ],
+  "suggested_actions": [
+    {
+      "action_type": "policy_action",
+      "action": "Log this uncategorized feedback and route it to a CS lead for weekly triage per POL-FEEDBACK-001.",
+      "source_ids": [
+        "POL-FEEDBACK-001"
+      ]
+    },
+    {
+      "action_type": "customer_response",
+      "action": "Reach out to Dana Whitfield to request specific details about both the billing concern and the app behavior, so the feedback can be properly categorized and handled per the general feedback handling process in POL-FEEDBACK-001.",
+      "source_ids": [
+        "POL-FEEDBACK-001"
+      ]
+    },
+    {
+      "action_type": "manual_triage",
+      "action": "Manually review whether the billing concern relates to active order ORD-8654 or the prior resolved billing ticket TCK-1290; no billing-specific policy or SOP was retrieved to guide a grounded billing action.",
+      "source_ids": []
+    }
+  ],
+  "confidence": 0.25,
+  "report_id": "RPT-73629806d7",
+  "classification": {
+    "category": "other",
+    "sentiment": "negative",
+    "urgency": "medium",
+    "confidence": 0.3,
+    "reason": "The feedback is vague, mentioning both a billing issue and an unspecified app problem without enough detail to reliably determine a single category.",
+    "is_ambiguous": true
+  },
+  "warnings": [],
+  "missing_context": [
+    "guidelines: no matching record found"
+  ],
+  "needs_human_review": true,
+  "review_reason": "classification confidence 0.30 below 0.65; missing context: guidelines: no matching record found; report confidence 0.25 below 0.7",
+  "status": "pending_review"
+}

@@ -1,0 +1,103 @@
+{
+  "run_id": "RUN-289dea2488",
+  "started_at": "2026-07-22T18:27:57.893195+00:00",
+  "steps": [
+    {
+      "step": "intake",
+      "elapsed_ms": 17,
+      "submission": {
+        "feedback_text": "billing is weird and the app sometimes does the thing wrong?",
+        "customer_id": "CUST-004",
+        "timestamp": "2026-07-22T18:27:57.892908Z",
+        "channel": "web_form"
+      }
+    },
+    {
+      "step": "classification",
+      "elapsed_ms": 3371,
+      "result": {
+        "category": "other",
+        "sentiment": "negative",
+        "urgency": "medium",
+        "confidence": 0.3,
+        "reason": "The feedback is vague, mentioning both a billing issue and an unspecified app problem without enough detail to reliably determine a single category.",
+        "is_ambiguous": true
+      }
+    },
+    {
+      "step": "retrieval",
+      "elapsed_ms": 11949,
+      "iterations": 2,
+      "source_states": {
+        "customer": "retrieved",
+        "policies": "retrieved",
+        "guidelines": "not_found"
+      },
+      "tool_calls": [
+        {
+          "tool_name": "get_customer",
+          "arguments": {
+            "customer_id": "CUST-004",
+            "reason": "Look up the customer's tier, tenure, and history to contextualize this ambiguous negative feedback (CUST-004 provided on the web form)."
+          },
+          "status": "success",
+          "source_ids": [
+            "CUST-004"
+          ],
+          "message": null,
+          "deduped": false
+        },
+        {
+          "tool_name": "search_policies",
+          "arguments": {
+            "category": "other",
+            "reason": "Find policies applicable to the 'other' category since the feedback is ambiguous and couldn't be reliably classified."
+          },
+          "status": "success",
+          "source_ids": [
+            "POL-FEEDBACK-001"
+          ],
+          "message": null,
+          "deduped": false
+        },
+        {
+          "tool_name": "get_cs_guidelines",
+          "arguments": {
+            "category": "other",
+            "reason": "Fetch the standard CS workflow for handling 'other'/ambiguous feedback so the report can recommend next steps."
+          },
+          "status": "not_found",
+          "source_ids": [],
+          "message": "no CS guideline for category 'other'",
+          "deduped": false
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "step": "validate_context",
+      "elapsed_ms": 11949,
+      "review_reasons": [
+        "classification confidence 0.30 below 0.65",
+        "missing context: guidelines: no matching record found"
+      ],
+      "missing_context": [
+        "guidelines: no matching record found"
+      ]
+    },
+    {
+      "step": "report",
+      "elapsed_ms": 20963,
+      "confidence": 0.25,
+      "needs_human_review": true,
+      "review_reason": "classification confidence 0.30 below 0.65; missing context: guidelines: no matching record found; report confidence 0.25 below 0.7",
+      "warnings": []
+    },
+    {
+      "step": "final",
+      "elapsed_ms": 20963,
+      "status": "pending_review",
+      "retry_count": 0
+    }
+  ]
+}

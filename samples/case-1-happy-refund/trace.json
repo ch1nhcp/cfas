@@ -1,0 +1,113 @@
+{
+  "run_id": "RUN-d3026c2f99",
+  "started_at": "2026-07-22T18:26:11.767151+00:00",
+  "steps": [
+    {
+      "step": "intake",
+      "elapsed_ms": 17,
+      "submission": {
+        "feedback_text": "I was charged twice for my subscription this month, please refund the duplicate",
+        "customer_id": "CUST-001",
+        "timestamp": "2026-07-22T18:26:11.766932Z",
+        "channel": "email"
+      }
+    },
+    {
+      "step": "classification",
+      "elapsed_ms": 3113,
+      "result": {
+        "category": "billing_complaint",
+        "sentiment": "negative",
+        "urgency": "medium",
+        "confidence": 0.97,
+        "reason": "The customer reports a duplicate subscription charge and is requesting a refund, which is a billing dispute.",
+        "is_ambiguous": false
+      }
+    },
+    {
+      "step": "retrieval",
+      "elapsed_ms": 13945,
+      "iterations": 2,
+      "source_states": {
+        "customer": "retrieved",
+        "policies": "retrieved",
+        "guidelines": "retrieved"
+      },
+      "tool_calls": [
+        {
+          "tool_name": "get_customer",
+          "arguments": {
+            "customer_id": "CUST-001",
+            "reason": "Retrieve customer tier, tenure, and order/billing history to verify the reported duplicate subscription charge and assess refund eligibility."
+          },
+          "status": "success",
+          "source_ids": [
+            "CUST-001"
+          ],
+          "message": null,
+          "deduped": false
+        },
+        {
+          "tool_name": "search_policies",
+          "arguments": {
+            "category": "billing_complaint",
+            "query": "duplicate charge refund",
+            "reason": "Find the applicable refund policy for a duplicate subscription charge to determine what remedy the customer is entitled to."
+          },
+          "status": "not_found",
+          "source_ids": [],
+          "message": "no policy applies to category 'billing_complaint' matching query 'duplicate charge refund'",
+          "deduped": false
+        },
+        {
+          "tool_name": "get_cs_guidelines",
+          "arguments": {
+            "category": "billing_complaint",
+            "reason": "Fetch the standard CS workflow for handling billing complaints so the report follows the correct process for a refund request."
+          },
+          "status": "success",
+          "source_ids": [
+            "SOP-BILLING-001"
+          ],
+          "message": null,
+          "deduped": false
+        },
+        {
+          "tool_name": "search_policies",
+          "arguments": {
+            "category": "billing_complaint",
+            "reason": "Broadening the earlier not_found search by dropping the query text to find any general billing/refund policy (the guideline references POL-REFUND-001)."
+          },
+          "status": "success",
+          "source_ids": [
+            "POL-REFUND-001",
+            "POL-SLA-001"
+          ],
+          "message": null,
+          "deduped": false
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "step": "validate_context",
+      "elapsed_ms": 13945,
+      "review_reasons": [],
+      "missing_context": []
+    },
+    {
+      "step": "report",
+      "elapsed_ms": 25311,
+      "confidence": 0.72,
+      "needs_human_review": false,
+      "review_reason": null,
+      "warnings": []
+    },
+    {
+      "step": "final",
+      "elapsed_ms": 25311,
+      "status": "pending_review",
+      "retry_count": 0
+    }
+  ]
+}

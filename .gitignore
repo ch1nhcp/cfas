@@ -19,3 +19,6 @@ venv/
 # Build/tool artifacts
 .coverage
 uv.lock
+
+# Default run artifacts (samples/ is committed instead)
+runs/

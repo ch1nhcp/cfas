@@ -1,0 +1,103 @@
+{
+  "run_id": "RUN-ca7720fe46",
+  "started_at": "2026-07-22T18:27:21.048367+00:00",
+  "steps": [
+    {
+      "step": "intake",
+      "elapsed_ms": 17,
+      "submission": {
+        "feedback_text": "Where is my refund?",
+        "customer_id": "CUST-404",
+        "timestamp": "2026-07-22T18:27:21.048125Z",
+        "channel": "email"
+      }
+    },
+    {
+      "step": "classification",
+      "elapsed_ms": 5371,
+      "result": {
+        "category": "billing_complaint",
+        "sentiment": "negative",
+        "urgency": "medium",
+        "confidence": 0.85,
+        "reason": "The customer is asking about the status of a refund, which is a billing-related dispute.",
+        "is_ambiguous": false
+      }
+    },
+    {
+      "step": "retrieval",
+      "elapsed_ms": 13767,
+      "iterations": 2,
+      "source_states": {
+        "customer": "not_found",
+        "policies": "retrieved",
+        "guidelines": "retrieved"
+      },
+      "tool_calls": [
+        {
+          "tool_name": "get_customer",
+          "arguments": {
+            "customer_id": "CUST-404",
+            "reason": "Retrieve customer tier, tenure, and order/refund history to contextualize the refund status inquiry."
+          },
+          "status": "not_found",
+          "source_ids": [],
+          "message": "no customer record for 'CUST-404'",
+          "deduped": false
+        },
+        {
+          "tool_name": "search_policies",
+          "arguments": {
+            "category": "billing_complaint",
+            "query": "refund",
+            "reason": "Find refund policies applicable to this billing complaint about a pending refund."
+          },
+          "status": "success",
+          "source_ids": [
+            "POL-REFUND-001"
+          ],
+          "message": null,
+          "deduped": false
+        },
+        {
+          "tool_name": "get_cs_guidelines",
+          "arguments": {
+            "category": "billing_complaint",
+            "reason": "Fetch the standard CS workflow for handling billing complaints/refund inquiries."
+          },
+          "status": "success",
+          "source_ids": [
+            "SOP-BILLING-001"
+          ],
+          "message": null,
+          "deduped": false
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "step": "validate_context",
+      "elapsed_ms": 13767,
+      "review_reasons": [
+        "missing context: customer: no matching record found"
+      ],
+      "missing_context": [
+        "customer: no matching record found"
+      ]
+    },
+    {
+      "step": "report",
+      "elapsed_ms": 23201,
+      "confidence": 0.4,
+      "needs_human_review": true,
+      "review_reason": "missing context: customer: no matching record found; report confidence 0.40 below 0.7",
+      "warnings": []
+    },
+    {
+      "step": "final",
+      "elapsed_ms": 23201,
+      "status": "pending_review",
+      "retry_count": 0
+    }
+  ]
+}

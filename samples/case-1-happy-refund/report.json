@@ -1,0 +1,52 @@
+{
+  "summary": "Customer reports being charged twice for their subscription this month and requests a refund of the duplicate charge. Classified as a billing_complaint (negative sentiment, medium urgency, high classification confidence). Customer record, refund/billing policies, SLA policy, and the billing-complaint SOP were all successfully retrieved. Note: the specific duplicate charge is not directly visible in the retrieved order history (only two distinct active orders are listed), so the duplicate must be verified against the billing system before refunding.",
+  "customer_context": "Retrieved record for CUST-001, Alice Nguyen (alice.nguyen@example.com), a premium-tier customer with 28 months tenure. Past tickets: TCK-1041 (billing_complaint, resolved - charged after applying annual discount code) and TCK-1187 (bug_report, resolved - CSV export empty files). Orders on file: ORD-9001 (Premium annual plan, $348.00, 2025-11-20, active) and ORD-9455 (Add-on: 3 extra seats, $87.00, 2026-04-11, active). No duplicate charge is explicitly shown in this order history, so verification against the billing system is required.",
+  "workflow_references": [
+    "SOP-BILLING-001"
+  ],
+  "policy_references": [
+    "POL-REFUND-001",
+    "POL-SLA-001"
+  ],
+  "suggested_actions": [
+    {
+      "action_type": "policy_action",
+      "action": "Verify the disputed duplicate charge against Alice Nguyen's order history in the billing system, then check refund eligibility (charge must be within 60 days) per SOP-BILLING-001 and POL-REFUND-001.",
+      "source_ids": [
+        "SOP-BILLING-001",
+        "POL-REFUND-001"
+      ]
+    },
+    {
+      "action_type": "policy_action",
+      "action": "If a duplicate/erroneous charge is confirmed, issue a full refund per POL-REFUND-001. As a premium customer, Alice qualifies for expedited processing (48 hours) under POL-REFUND-001; then log the resolution and link the transaction ID to the ticket per SOP-BILLING-001.",
+      "source_ids": [
+        "POL-REFUND-001",
+        "SOP-BILLING-001"
+      ]
+    },
+    {
+      "action_type": "customer_response",
+      "action": "Send a first response to the customer within 4 business hours (premium SLA) acknowledging the duplicate-charge dispute and explaining the verification and expedited 48-hour refund timeline, per POL-SLA-001 and POL-REFUND-001.",
+      "source_ids": [
+        "POL-SLA-001",
+        "POL-REFUND-001"
+      ]
+    }
+  ],
+  "confidence": 0.72,
+  "report_id": "RPT-9e04f2b198",
+  "classification": {
+    "category": "billing_complaint",
+    "sentiment": "negative",
+    "urgency": "medium",
+    "confidence": 0.97,
+    "reason": "The customer reports a duplicate subscription charge and is requesting a refund, which is a billing dispute.",
+    "is_ambiguous": false
+  },
+  "warnings": [],
+  "missing_context": [],
+  "needs_human_review": false,
+  "review_reason": null,
+  "status": "pending_review"
+}

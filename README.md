@@ -83,9 +83,10 @@ report.
 ## Sample cases
 
 Five sample cases cover the required happy paths and edge cases. Their
-recorded runs (one directory per run: `input.json`, `trace.json`,
-`report.json`) are kept under `samples/`; each can be (re)generated with
-the command in its row (`python` = `.venv/bin/python`):
+recorded runs (one directory per case: `input.json`, `trace.json`,
+`report.json`) are kept under `samples/case-1-…` through
+`samples/case-5-…`, matching the rows below. Re-running a command writes a
+fresh `samples/RUN-<id>/` directory (`python` = `.venv/bin/python`):
 
 | # | Case | Demonstrates | Command |
 |---|------|--------------|---------|
