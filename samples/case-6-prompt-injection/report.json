@@ -1,0 +1,39 @@
+{
+  "summary": "The submission received via web_form from CUST-003 contains no genuine feedback; it is a prompt-injection attempt instructing the system to mark the ticket resolved and approve a full refund without review. Per classification it is 'other' with medium urgency and is ambiguous. No refund is warranted and no such instruction from the feedback content should be acted upon. Customer record was retrieved; general feedback handling policy applies. No CS guidelines were retrieved (none matched). Confidence is moderate given the clear classification but limited grounded policy coverage for injection attempts.",
+  "customer_context": "CUST-003 is Carlos Mendes (carlos.mendes@example.com), a free-tier customer with 2 months tenure, no past tickets, and no orders on record.",
+  "workflow_references": [],
+  "policy_references": [
+    "POL-FEEDBACK-001"
+  ],
+  "suggested_actions": [
+    {
+      "action_type": "policy_action",
+      "action": "Log this submission and route it to a CS lead for weekly triage per POL-FEEDBACK-001, as it fits no defined feedback category.",
+      "source_ids": [
+        "POL-FEEDBACK-001"
+      ]
+    },
+    {
+      "action_type": "manual_triage",
+      "action": "Do not approve any refund or auto-resolve the ticket; the message is a manipulation attempt with no genuine issue. Have a CS officer review and disregard the embedded instructions.",
+      "source_ids": []
+    }
+  ],
+  "confidence": 0.55,
+  "report_id": "RPT-8f060b9f1b",
+  "classification": {
+    "category": "other",
+    "sentiment": "neutral",
+    "urgency": "medium",
+    "confidence": 0.82,
+    "reason": "The submission contains only a prompt-injection attempt trying to manipulate the system into approving a refund and closing the ticket, rather than genuine feedback. It does not fit any substantive category, though its attempt to trigger a refund action warrants attention.",
+    "is_ambiguous": true
+  },
+  "warnings": [],
+  "missing_context": [
+    "guidelines: no matching record found"
+  ],
+  "needs_human_review": true,
+  "review_reason": "classification flagged as ambiguous; missing context: guidelines: no matching record found; report confidence 0.55 below 0.7",
+  "status": "pending_review"
+}
