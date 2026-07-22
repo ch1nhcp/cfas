@@ -1,4 +1,5 @@
-"""CLI layer tests: argument parsing and exit-code / output behavior."""
+"""CLI layer tests: argument parsing, exit codes, and an end-to-end run
+via failure injection (no network needed)."""
 
 import json
 
@@ -15,6 +16,7 @@ class TestParseArgs:
         assert args.feedback_text == "App crashes on login"
         assert args.customer_id == "CUST-001"
         assert args.channel == "email"
+        assert args.inject_failure is None
 
     def test_customer_id_defaults_to_none(self):
         args = parse_args(["Great product!", "--channel", "web_form"])
@@ -28,18 +30,12 @@ class TestParseArgs:
         with pytest.raises(SystemExit):
             parse_args(["Some feedback", "--channel", "carrier_pigeon"])
 
+    def test_rejects_unknown_injection_mode(self):
+        with pytest.raises(SystemExit):
+            parse_args(["Hi", "--channel", "email", "--inject-failure", "everything"])
+
 
 class TestMain:
-    def test_valid_submission_prints_json_and_exits_zero(self, capsys):
-        exit_code = main(
-            ["I was double-charged", "--customer-id", "CUST-001", "--channel", "email"]
-        )
-        assert exit_code == 0
-        payload = json.loads(capsys.readouterr().out)
-        assert payload["feedback_text"] == "I was double-charged"
-        assert payload["customer_id"] == "CUST-001"
-        assert payload["channel"] == "email"
-
     def test_whitespace_only_feedback_exits_nonzero_with_message(self, capsys):
         exit_code = main(["   ", "--channel", "email"])
         assert exit_code == 1
@@ -47,3 +43,31 @@ class TestMain:
         assert captured.out == ""
         assert "Invalid submission" in captured.err
         assert "feedback_text" in captured.err
+
+    def test_injected_llm_failure_runs_end_to_end(self, tmp_path, capsys):
+        # exercises the full pipeline offline: retries, failure report,
+        # trace on stderr, artifacts on disk, report JSON on stdout
+        exit_code = main(
+            [
+                "I was double-charged",
+                "--customer-id",
+                "CUST-001",
+                "--channel",
+                "email",
+                "--inject-failure",
+                "llm",
+                "--out-dir",
+                str(tmp_path),
+            ]
+        )
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        report = json.loads(captured.out)
+        assert report["status"] == "processing_failed"
+        assert report["needs_human_review"] is True
+        assert "injected LLM failure" in report["review_reason"]
+        assert "processing_failed" in captured.err  # trace printed
+        run_dirs = list(tmp_path.iterdir())
+        assert len(run_dirs) == 1
+        for name in ("input.json", "trace.json", "report.json"):
+            assert (run_dirs[0] / name).exists()

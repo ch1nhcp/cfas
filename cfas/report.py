@@ -17,7 +17,14 @@ from cfas.agent import RetrievalResult
 from cfas.config import MODEL_ID, REPORT_MAX_TOKENS
 from cfas.gate import ContextValidation, ReportValidation, validate_report
 from cfas.llm import default_client, structured_llm_call, structured_output_schema
-from cfas.models import Classification, FeedbackReport, ReportDraft, ReportStatus
+from cfas.models import (
+    ActionType,
+    Classification,
+    FeedbackReport,
+    ReportDraft,
+    ReportStatus,
+    SuggestedAction,
+)
 
 
 class ReportGenerationError(Exception):
@@ -120,6 +127,42 @@ def _assemble(
         needs_human_review=bool(reasons),
         review_reason="; ".join(reasons) if reasons else None,
         status=ReportStatus.PENDING_REVIEW,
+    )
+
+
+def make_failure_report(
+    report_id: str,
+    error_summary: str,
+    classification: Classification | None,
+) -> FeedbackReport:
+    """Terminal fallback when the pipeline cannot produce a report (e.g.
+    LLM unavailable after all retry attempts, or persistent schema
+    failures). Every field is filled explicitly - the report stays valid
+    under the no-defaults schema and is routed straight to a human."""
+    failure_note = f"processing failed: {error_summary}"
+    return FeedbackReport(
+        report_id=report_id,
+        summary=(
+            "Automated processing failed; no report could be generated. "
+            f"Cause: {error_summary}"
+        ),
+        customer_context="not gathered (processing failed)",
+        workflow_references=[],
+        policy_references=[],
+        suggested_actions=[
+            SuggestedAction(
+                action_type=ActionType.MANUAL_TRIAGE,
+                action="Route this feedback to manual triage.",
+                source_ids=[],
+            )
+        ],
+        confidence=0.0,
+        classification=classification,
+        warnings=[failure_note],
+        missing_context=["pipeline did not complete context gathering/reporting"],
+        needs_human_review=True,
+        review_reason=failure_note,
+        status=ReportStatus.PROCESSING_FAILED,
     )
 
 

@@ -19,6 +19,12 @@ LLM_TIMEOUT_SECONDS = 60.0
 # partial context rather than looping forever.
 MAX_TOOL_ITERATIONS = 6
 
+# Transient LLM API errors (timeout, rate limit, 5xx) are retried this many
+# times in total with exponential backoff. The pipeline owns this policy;
+# the SDK's built-in retries are disabled so attempts aren't multiplied.
+LLM_MAX_ATTEMPTS = 3
+RETRY_BASE_DELAY_SECONDS = 1.0
+
 # classification.confidence below this forces is_ambiguous=True (code-owned
 # rule; the LLM's own is_ambiguous flag is only ever OR-ed in, never trusted
 # to clear the flag).

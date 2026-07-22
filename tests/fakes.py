@@ -6,9 +6,34 @@ Responses are plain SimpleNamespace objects shaped like the SDK's Message
 
 from types import SimpleNamespace
 
+import anthropic
+
+
+class FakeRateLimit(anthropic.RateLimitError):
+    """Constructor deliberately bypassed - only the type matters."""
+
+    def __init__(self):
+        Exception.__init__(self, "rate limited")
+
+
+class FakeServerError(anthropic.InternalServerError):
+    def __init__(self):
+        Exception.__init__(self, "overloaded")
+
+
+class FakeBadRequest(anthropic.BadRequestError):
+    def __init__(self):
+        Exception.__init__(self, "bad request")
+
+
+class FakeAuthError(anthropic.AuthenticationError):
+    def __init__(self):
+        Exception.__init__(self, "invalid api key")
+
 
 class FakeClient:
-    """Returns queued responses in order and records every request."""
+    """Returns queued responses in order and records every request.
+    A queued Exception instance is raised instead of returned."""
 
     def __init__(self, responses):
         self.requests = []
@@ -17,7 +42,10 @@ class FakeClient:
 
     def _create(self, **kwargs):
         self.requests.append(kwargs)
-        return self._responses.pop(0)
+        item = self._responses.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return item
 
 
 def text_block(text):

@@ -1,5 +1,7 @@
 """Shared domain-object factories for tests."""
 
+from fakes import tool_use_block
+
 from cfas.agent import RetrievalResult, Source, SourceStatus
 from cfas.models import (
     ActionType,
@@ -46,6 +48,24 @@ def make_action(**overrides):
         "source_ids": ["POL-REFUND-001"],
     }
     return SuggestedAction(**{**fields, **overrides})
+
+
+def customer_call(customer_id="CUST-001", reason="look up tier and history", cid="t1"):
+    return tool_use_block(
+        "get_customer", {"customer_id": customer_id, "reason": reason}, cid
+    )
+
+
+def policies_call(category="billing_complaint", reason="find refund policy", cid="t2"):
+    return tool_use_block(
+        "search_policies", {"category": category, "reason": reason}, cid
+    )
+
+
+def guidelines_call(category="billing_complaint", reason="find the SOP", cid="t3"):
+    return tool_use_block(
+        "get_cs_guidelines", {"category": category, "reason": reason}, cid
+    )
 
 
 def make_draft(**overrides):

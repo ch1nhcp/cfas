@@ -6,6 +6,7 @@ loop's tool execution path is exercised end-to-end.
 
 from datetime import datetime, timezone
 
+from factories import customer_call, guidelines_call, policies_call
 from fakes import FakeClient, make_response, make_text_response, tool_use_block
 
 from cfas.agent import Source, SourceStatus, gather_context
@@ -37,24 +38,6 @@ ANONYMOUS = build_submission(
     channel="web_form",
     timestamp=TS,
 )
-
-
-def customer_call(customer_id="CUST-001", reason="look up tier and history", cid="t1"):
-    return tool_use_block(
-        "get_customer", {"customer_id": customer_id, "reason": reason}, cid
-    )
-
-
-def policies_call(category="billing_complaint", reason="find refund policy", cid="t2"):
-    return tool_use_block(
-        "search_policies", {"category": category, "reason": reason}, cid
-    )
-
-
-def guidelines_call(category="billing_complaint", reason="find the SOP", cid="t3"):
-    return tool_use_block(
-        "get_cs_guidelines", {"category": category, "reason": reason}, cid
-    )
 
 
 class TestHappyPath:

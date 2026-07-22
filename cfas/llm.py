@@ -21,7 +21,9 @@ T = TypeVar("T", bound=BaseModel)
 
 
 def default_client() -> anthropic.Anthropic:
-    return anthropic.Anthropic(timeout=LLM_TIMEOUT_SECONDS)
+    # max_retries=0: the pipeline's RetryingClient owns the retry policy;
+    # leaving the SDK default (2) would multiply attempts.
+    return anthropic.Anthropic(timeout=LLM_TIMEOUT_SECONDS, max_retries=0)
 
 
 _UNSUPPORTED_SCHEMA_KEYS = {
