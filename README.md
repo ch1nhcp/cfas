@@ -14,40 +14,24 @@ grounding, retries, loop bounds).
 
 ## Architecture
 
+```mermaid
+flowchart TD
+    IN(["feedback text + metadata (CLI)"]) --> INTAKE["intake — validate & normalize<br/><i>intake.py, models.py</i>"]
+    INTAKE --> CLS["classification — LLM call #1, structured output<br/>1 repair retry · code rule: confidence &lt; 0.65 → ambiguous<br/><i>classify.py</i>"]
+    CLS --> LOOP["retrieval loop — ≤ 6 LLM turns<br/>get_customer · search_policies · get_cs_guidelines<br/>per-source state machine, dedupe cache, one nudge<br/><i>agent.py, tools.py</i>"]
+    LOOP --> G1["gate phase 1 — validate_context()<br/>deterministic review rules<br/><i>gate.py</i>"]
+    G1 --> DRAFT["report draft — final LLM call → ReportDraft<br/>schema has NO control fields<br/><i>report.py</i>"]
+    DRAFT --> G2["gate phase 2 — validate_report()<br/>grounding assertion, strip + flag<br/><i>gate.py</i>"]
+    G2 --> OUT(["FeedbackReport<br/>status=pending_review, code-assembled"])
+    OUT --> REVIEW["human review — approve / override / reject<br/><i>review.py (stub)</i>"]
+
+    classDef llm fill:#fff3cd,stroke:#b8860b
+    classDef code fill:#d1e7dd,stroke:#146c43
+    class CLS,LOOP,DRAFT llm
+    class INTAKE,G1,G2,REVIEW code
 ```
- feedback text + metadata (CLI)
-          │
-          ▼
- ┌─ intake ──────────┐  validate & normalize          intake.py, models.py
- └────────┬──────────┘
-          ▼
- ┌─ classification ──┐  LLM call #1, structured       classify.py
- │                   │  output → Classification;
- │                   │  1 repair retry; code rule:
- │                   │  confidence < 0.65 → ambiguous
- └────────┬──────────┘
-          ▼
- ┌─ retrieval loop ──┐  ≤ 6 LLM turns; the agent      agent.py, tools.py
- │  get_customer     │  picks tools/order/args;
- │  search_policies  │  per-source state machine,
- │  get_cs_guidelines│  dedupe cache, one nudge,
- └────────┬──────────┘  one final-chance turn
-          ▼
- ┌─ gate phase 1 ────┐  validate_context():           gate.py
- └────────┬──────────┘  deterministic review rules
-          ▼
- ┌─ report draft ────┐  final LLM call → ReportDraft  report.py
- └────────┬──────────┘  (schema has NO control fields)
-          ▼
- ┌─ gate phase 2 ────┐  validate_report(): grounding
- └────────┬──────────┘  assertion, strip + flag
-          ▼
-   FeedbackReport (status=pending_review, code-assembled)
-          │
-          ▼
- ┌─ human review ────┐  approve / override / reject   review.py (stub)
- └───────────────────┘
-```
+
+🟡 LLM stages (the agent proposes) · 🟢 deterministic code (control decisions)
 
 Cross-cutting: `retry.py` (backoff for transient LLM errors wraps every LLM
 call), `trace.py` (every run records all intermediate steps),
