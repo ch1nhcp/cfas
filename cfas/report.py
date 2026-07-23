@@ -206,7 +206,7 @@ def generate_report(
     report_validation = validate_report(
         draft,
         retrieval.retrieved_source_ids,
-        grounded_id_set(retrieval, submission),
+        prose_grounded_ids=grounded_id_set(retrieval, submission),
         classification=classification,
     )
     return _assemble(

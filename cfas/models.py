@@ -23,9 +23,24 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+# Citable-ID prefixes (mock-data conventions) - the single source of truth
+# for every grounding check; the gate builds its scan pattern from these.
+CUSTOMER_ID_PREFIX = "CUST-"
+POLICY_ID_PREFIX = "POL-"
+SOP_ID_PREFIX = "SOP-"
+TICKET_ID_PREFIX = "TCK-"
+ORDER_ID_PREFIX = "ORD-"
+SOURCE_ID_PREFIXES = (
+    CUSTOMER_ID_PREFIX,
+    POLICY_ID_PREFIX,
+    SOP_ID_PREFIX,
+    TICKET_ID_PREFIX,
+    ORDER_ID_PREFIX,
+)
+
 # Mock-data convention; validated at intake so arbitrary strings (or
 # prompt-injection payloads) can never ride along as a customer ID.
-CUSTOMER_ID_PATTERN = re.compile(r"^CUST-\d{3}$")
+CUSTOMER_ID_PATTERN = re.compile(rf"^{CUSTOMER_ID_PREFIX}\d{{3}}$")
 
 
 class Channel(StrEnum):

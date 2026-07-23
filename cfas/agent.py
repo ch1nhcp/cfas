@@ -138,7 +138,7 @@ class _LoopState:
 
     states: dict[Source, SourceStatus]
     messages: list[dict]
-    primary_category: str = ""
+    primary_category: str
     context: dict[Source, list] = field(default_factory=lambda: {s: [] for s in Source})
     retrieved_ids: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)

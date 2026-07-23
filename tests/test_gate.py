@@ -211,7 +211,7 @@ class TestGroundedIdSet:
         v = validate_report(
             draft,
             RETRIEVED_IDS,
-            grounded_id_set(make_retrieval(), submission),
+            prose_grounded_ids=grounded_id_set(make_retrieval(), submission),
         )
         assert v.review_reasons == []
         assert v.warnings == []
@@ -228,7 +228,7 @@ class TestStrictVsProseGrounding:
             policy_references=["POL-REFUND-001", "POL-ESCALATION-001"],
             summary="Escalate per POL-ESCALATION-001 if unresolved.",
         )
-        v = validate_report(draft, RETRIEVED_IDS, self.PROSE_IDS)
+        v = validate_report(draft, RETRIEVED_IDS, prose_grounded_ids=self.PROSE_IDS)
         assert v.draft.policy_references == ["POL-REFUND-001"]  # stripped
         assert any("POL-ESCALATION-001" in w for w in v.warnings)
         assert "[unverified" not in v.draft.summary  # prose mention is fine
@@ -237,7 +237,7 @@ class TestStrictVsProseGrounding:
         draft = make_draft(
             suggested_actions=[make_action(source_ids=["POL-ESCALATION-001"])]
         )
-        v = validate_report(draft, RETRIEVED_IDS, self.PROSE_IDS)
+        v = validate_report(draft, RETRIEVED_IDS, prose_grounded_ids=self.PROSE_IDS)
         assert v.draft.suggested_actions[0].source_ids == []
         assert any("policy/SOP" in r for r in v.review_reasons)
 
@@ -280,7 +280,7 @@ class TestTicketOrderIds:
         draft = make_draft(
             customer_context="Prior ticket TCK-1041, order ORD-9001 active."
         )
-        v = validate_report(draft, RETRIEVED_IDS, prose_ids)
+        v = validate_report(draft, RETRIEVED_IDS, prose_grounded_ids=prose_ids)
         assert v.warnings == []
         assert "[unverified" not in v.draft.customer_context
 
