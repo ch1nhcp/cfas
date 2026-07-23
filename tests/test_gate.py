@@ -254,6 +254,60 @@ class TestCaseInsensitiveScan:
         assert v.review_reasons == []
 
 
+class TestTicketOrderIds:
+    def test_fabricated_ticket_and_order_ids_are_caught(self):
+        draft = make_draft(
+            customer_context="Past ticket TCK-9999 and order ORD-FAKE-999."
+        )
+        v = validate_report(draft, RETRIEVED_IDS)
+        assert any("TCK-9999" in w for w in v.warnings)
+        assert "[unverified: TCK-9999]" in v.draft.customer_context
+        assert "[unverified: ORD-FAKE-999]" in v.draft.customer_context
+
+    def test_ticket_id_from_retrieved_record_is_grounded(self):
+        retrieval = make_retrieval(
+            context={
+                Source.CUSTOMER: [
+                    {"past_tickets": [{"ticket_id": "TCK-1041"}],
+                     "orders": [{"order_id": "ORD-9001"}]}
+                ],
+                Source.POLICIES: [],
+                Source.GUIDELINES: [],
+            }
+        )
+        prose_ids = grounded_id_set(retrieval)
+        assert "TCK-1041" in prose_ids and "ORD-9001" in prose_ids
+        draft = make_draft(
+            customer_context="Prior ticket TCK-1041, order ORD-9001 active."
+        )
+        v = validate_report(draft, RETRIEVED_IDS, prose_ids)
+        assert v.warnings == []
+        assert "[unverified" not in v.draft.customer_context
+
+
+class TestClassificationReasonGrounding:
+    def test_hallucinated_id_in_reason_is_flagged_and_redacted(self):
+        c = make_classification(
+            reason="Customer cites POL-FAKE-999 which mandates refunds."
+        )
+        v = validate_report(make_draft(), RETRIEVED_IDS, classification=c)
+        assert any("classification reason" in w for w in v.warnings)
+        assert any("classification reason" in r for r in v.review_reasons)
+        assert "[unverified: POL-FAKE-999]" in v.classification.reason
+        assert "POL-FAKE-999" in c.reason  # original untouched
+        assert "[unverified" not in c.reason
+
+    def test_clean_reason_passes_through_unchanged(self):
+        c = make_classification()
+        v = validate_report(make_draft(), RETRIEVED_IDS, classification=c)
+        assert v.classification == c
+        assert v.review_reasons == []
+
+    def test_without_classification_field_is_none(self):
+        v = validate_report(make_draft(), RETRIEVED_IDS)
+        assert v.classification is None
+
+
 class TestValidateReportConfidence:
     def test_low_report_confidence_forces_review(self):
         draft = make_draft(confidence=REPORT_CONFIDENCE_THRESHOLD - 0.05)

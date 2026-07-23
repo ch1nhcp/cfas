@@ -128,6 +128,15 @@ class TestClassification:
                 # reason and is_ambiguous missing
             )
 
+    def test_rejects_empty_or_whitespace_reason(self):
+        for bad in ("", "   \n "):
+            with pytest.raises(ValidationError):
+                make_classification(reason=bad)
+
+    def test_reason_is_stripped(self):
+        c = make_classification(reason="  solid rationale  ")
+        assert c.reason == "solid rationale"
+
     def test_is_frozen(self):
         c = make_classification()
         with pytest.raises(ValidationError):
@@ -185,6 +194,15 @@ class TestReportDraft:
         # zero actions
         with pytest.raises(ValidationError):
             make_draft(suggested_actions=[])
+
+    def test_rejects_whitespace_only_text_fields(self):
+        for field in ("summary", "customer_context"):
+            with pytest.raises(ValidationError):
+                make_draft(**{field: "   "})
+        with pytest.raises(ValidationError):
+            SuggestedAction(
+                action_type=ActionType.LOG_ONLY, action="  \n ", source_ids=[]
+            )
 
 
 class TestFeedbackReport:

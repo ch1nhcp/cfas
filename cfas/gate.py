@@ -33,15 +33,17 @@ from cfas.models import (
     Urgency,
 )
 
-# ID shapes that must be groundable in retrieved data when they appear
-# anywhere in a report. Deliberately broader than the real data conventions
-# (any CUST-/POL-/SOP- segment chain) so hallucinated variants like
-# POL-REFUND-V2-001 are caught too; case-insensitive so a lowercase mention
-# cannot evade the scan. TCK-/ORD- IDs are excluded: they live inside
-# retrieved customer records, not in retrieved_source_ids, so scanning them
-# would flag legitimately grounded mentions.
+# ID shapes that must be groundable when they appear anywhere in a report.
+# Deliberately broader than the real data conventions (any known-prefix
+# segment chain) so hallucinated variants like POL-REFUND-V2-001 are caught
+# too; case-insensitive so a lowercase mention cannot evade the scan.
+# TCK-/ORD- (ticket/order) IDs are included: they live inside retrieved
+# customer records, and since the prose grounding set also contains IDs
+# quoted inside retrieved content, legitimate mentions (TCK-1041 from a
+# retrieved record) ground automatically while fabricated ones (TCK-9999)
+# are caught.
 _SOURCE_ID_PATTERN = re.compile(
-    r"\b(?:CUST|POL|SOP)(?:-[A-Z0-9]+)+\b", re.IGNORECASE
+    r"\b(?:CUST|POL|SOP|TCK|ORD)(?:-[A-Z0-9]+)+\b", re.IGNORECASE
 )
 
 # Action types that may legitimately carry no source citations.
@@ -63,11 +65,14 @@ class ContextValidation(BaseModel):
 
 
 class ReportValidation(BaseModel):
-    """Phase-2 result. draft is the sanitized copy (ungrounded IDs stripped)."""
+    """Phase-2 result. draft (and classification, when provided) are the
+    sanitized copies: ungrounded IDs stripped from citations, marked
+    [unverified] in prose."""
 
     model_config = ConfigDict(frozen=True)
 
     draft: ReportDraft
+    classification: Classification | None
     warnings: list[str]
     review_reasons: list[str]
 
@@ -207,15 +212,10 @@ def _sanitize_action(
     return sanitized, warnings, reasons
 
 
-def _scan_free_text(draft: ReportDraft, known_upper: set[str]) -> list[str]:
+def _scan_texts(texts: list[str], known_upper: set[str]) -> list[str]:
     """IDs mentioned in prose must be grounded too - a hallucinated
     'per POL-XXX-999' inside the summary is as bad as one in a list.
     Comparison is case-insensitive (the pattern matches lowercase too)."""
-    texts = [
-        draft.summary,
-        draft.customer_context,
-        *[action.action for action in draft.suggested_actions],
-    ]
     ungrounded: list[str] = []
     seen_upper: set[str] = set()
     for text in texts:
@@ -231,6 +231,7 @@ def validate_report(
     draft: ReportDraft,
     retrieved_source_ids: list[str],
     prose_grounded_ids: list[str] | None = None,
+    classification: Classification | None = None,
 ) -> ReportValidation:
     """Phase 2: grounding assertion + report confidence rule.
 
@@ -239,6 +240,10 @@ def validate_report(
     is checked against prose_grounded_ids (see grounded_id_set; defaults to
     the strict set), which additionally allows quoting IDs that appear
     inside retrieved content and the submission's own customer ID.
+
+    When classification is provided, its free-text reason gets the same
+    prose treatment - it is embedded verbatim in the final report, so a
+    hallucinated ID there is as visible as one in the summary.
     """
     known = set(retrieved_source_ids)
     prose_known_upper = {
@@ -270,9 +275,27 @@ def validate_report(
         warnings.extend(action_warnings)
         reasons.extend(action_reasons)
 
-    for mention in _scan_free_text(draft, prose_known_upper):
+    draft_texts = [
+        draft.summary,
+        draft.customer_context,
+        *[action.action for action in draft.suggested_actions],
+    ]
+    for mention in _scan_texts(draft_texts, prose_known_upper):
         warnings.append(f"ungrounded ID '{mention}' mentioned in report text")
         reasons.append("report text mentions ungrounded source IDs")
+
+    sanitized_classification = classification
+    if classification is not None:
+        for mention in _scan_texts([classification.reason], prose_known_upper):
+            warnings.append(
+                f"ungrounded ID '{mention}' mentioned in classification reason"
+            )
+            reasons.append("classification reason mentions ungrounded source IDs")
+        redacted_reason = _mark_unverified(classification.reason, prose_known_upper)
+        if redacted_reason != classification.reason:
+            sanitized_classification = classification.model_copy(
+                update={"reason": redacted_reason}
+            )
 
     if draft.confidence < REPORT_CONFIDENCE_THRESHOLD:
         reasons.append(
@@ -293,6 +316,7 @@ def validate_report(
     )
     return ReportValidation(
         draft=sanitized_draft,
+        classification=sanitized_classification,
         warnings=list(dict.fromkeys(warnings)),
         review_reasons=list(dict.fromkeys(reasons)),  # dedupe, keep order
     )

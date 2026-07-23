@@ -31,11 +31,12 @@ confidence forces human review anyway.
 control layer — state machine, dedupe, grounding gate, retry taxonomy. A
 framework would hide exactly those decisions behind its own abstractions;
 the manual tool-calling loop is ~100 lines and every guardrail in it is
-explicit and testable. All 194 tests run offline against scripted fakes.
+explicit and testable. All 203 tests run offline against scripted fakes.
 
 **Grounding as an assertion, not an aspiration.** Structured citations
 (reference lists, per-action `source_ids`) must be directly retrieved;
-prose may additionally quote IDs appearing inside retrieved content.
+prose — every free-text field of the report, the classification rationale
+included — may additionally quote IDs appearing inside retrieved content.
 Violations are stripped from citations, rewritten as inline
 `[unverified: …]` markers in prose, warned, and force review. References
 are type-checked (SOPs vs policies), a non-exempt action must rest on at

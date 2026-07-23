@@ -99,6 +99,18 @@ class TestGateIntegration:
         assert report.missing_context == ["customer: no matching record found"]
         assert "missing" in report.review_reason
 
+    def test_hallucinated_id_in_classification_reason_is_sanitized(self):
+        client = FakeClient([make_text_response(VALID_DRAFT_JSON)])
+        report = run_generate(
+            client,
+            classification=make_classification(
+                reason="Customer cites POL-FAKE-999 which mandates refunds."
+            ),
+        )
+        assert "[unverified: POL-FAKE-999]" in report.classification.reason
+        assert report.needs_human_review is True
+        assert "classification reason" in report.review_reason
+
     def test_low_draft_confidence_forces_review(self):
         low = VALID_DRAFT_JSON.replace("0.88", "0.4")
         client = FakeClient([make_text_response(low)])

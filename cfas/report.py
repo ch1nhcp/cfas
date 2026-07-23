@@ -207,10 +207,13 @@ def generate_report(
         draft,
         retrieval.retrieved_source_ids,
         grounded_id_set(retrieval, submission),
+        classification=classification,
     )
     return _assemble(
         report_id=report_id or f"RPT-{uuid.uuid4().hex[:10]}",
-        classification=classification,
+        # the gate may have marked ungrounded IDs in the reason - embed the
+        # sanitized copy, never the raw one
+        classification=report_validation.classification,
         context_validation=context_validation,
         report_validation=report_validation,
     )

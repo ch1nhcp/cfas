@@ -155,8 +155,9 @@ deterministic local failure, no retry).
   stripped, warned about, and force human review. Prose is checked against
   a slightly broader set (IDs quoted inside retrieved content and the
   submission's own customer ID are legitimate mentions); hallucinated IDs
-  in prose are caught (case-insensitive, multi-segment variants included)
-  and rewritten as inline `[unverified: …]` markers. References are
+  in prose — including ticket/order IDs and the classification rationale —
+  are caught (case-insensitive, multi-segment variants included) and
+  rewritten as inline `[unverified: …]` markers. References are
   type-checked (`workflow_references` ↔ `SOP-*`, `policy_references` ↔
   `POL-*`), and every non-exempt action must cite at least one retrieved
   policy/SOP — a customer record alone is not an actionable basis. Empty
@@ -187,7 +188,7 @@ updated, record = apply_review(report, ReviewDecision.APPROVE, reviewer_id="cs-7
 ## Tests
 
 ```bash
-.venv/bin/python -m pytest              # 194 tests, no network needed
+.venv/bin/python -m pytest              # 203 tests, no network needed
 .venv/bin/python -m pytest --cov=cfas   # coverage (99%)
 ```
 

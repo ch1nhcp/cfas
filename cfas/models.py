@@ -128,8 +128,14 @@ class Classification(BaseModel):
     sentiment: Sentiment
     urgency: Urgency
     confidence: float = Field(ge=0.0, le=1.0)
-    reason: str
+    reason: str = Field(min_length=1)
     is_ambiguous: bool
+
+    @field_validator("reason", mode="before")
+    @classmethod
+    def _strip_reason(cls, value: object) -> object:
+        # whitespace-only must fail min_length, triggering repair
+        return value.strip() if isinstance(value, str) else value
 
 
 class SuggestedAction(BaseModel):
@@ -146,6 +152,11 @@ class SuggestedAction(BaseModel):
     action: str = Field(min_length=1)
     source_ids: list[str]
 
+    @field_validator("action", mode="before")
+    @classmethod
+    def _strip_action(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
 
 class ReportDraft(BaseModel):
     """LLM-facing schema for report generation.
@@ -158,13 +169,18 @@ class ReportDraft(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     summary: str = Field(min_length=1)
-    customer_context: str
+    customer_context: str = Field(min_length=1)
     workflow_references: list[str]
     policy_references: list[str]
     # at least one action always - "log_only"/"manual_triage" exist
     # precisely so there is never a reason to return none
     suggested_actions: list[SuggestedAction] = Field(min_length=1)
     confidence: float = Field(ge=0.0, le=1.0)
+
+    @field_validator("summary", "customer_context", mode="before")
+    @classmethod
+    def _strip_text_fields(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
 
 
 class FeedbackReport(ReportDraft):
