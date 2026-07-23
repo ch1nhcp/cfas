@@ -198,7 +198,7 @@ samples/       7 recorded sample runs
 
 ## AI assistance note
 
-Built with Claude Code (Claude Fable 5) used as a pair programmer under
+Built with Claude Code used as a pair programmer under
 close direction: the build plan was written and reviewed first; each step
 was implemented test-first, then passed through automated two-axis code
 review (standards + spec fidelity) before commit, plus a final whole-repo
