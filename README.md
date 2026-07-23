@@ -25,8 +25,8 @@ flowchart TD
     G2 --> OUT(["FeedbackReport<br/>status=pending_review, code-assembled"])
     OUT --> REVIEW["human review — approve / override / reject<br/><i>review.py (stub)</i>"]
 
-    classDef llm fill:#fff3cd,stroke:#b8860b
-    classDef code fill:#d1e7dd,stroke:#146c43
+    classDef llm fill:#fff3cd,stroke:#b8860b,color:#5c4400
+    classDef code fill:#d1e7dd,stroke:#146c43,color:#0c3823
     class CLS,LOOP,DRAFT llm
     class INTAKE,G1,G2,REVIEW code
 ```
