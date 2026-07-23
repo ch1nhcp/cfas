@@ -1,46 +1,55 @@
 {
-  "summary": "Customer CUST-004 (Dana Whitfield) submitted vague web_form feedback mentioning a possible billing issue and an unspecified app problem. The classification flags this as 'other', negative sentiment, medium urgency, and explicitly ambiguous (confidence 0.3). Retrieved context includes the customer record (CUST-004) and the General Feedback Handling Policy (POL-FEEDBACK-001). No workflow/SOP guidelines were retrieved, and no billing-specific policy is available, so no grounded billing resolution can be provided. The feedback is too vague to determine a specific issue, and required detail is missing.",
-  "customer_context": "Dana Whitfield (CUST-004), standard tier, 14 months tenure. One past ticket TCK-1290 (billing_complaint, resolved) regarding an invoice with corrected company address. Active order ORD-8654: Standard monthly plan, $29.00, dated 2026-07-01.",
-  "workflow_references": [],
+  "summary": "Customer CUST-004 (Dana Whitfield) submitted vague web_form feedback stating billing is \"weird\" and the app \"sometimes does the thing wrong.\" The feedback was classified as a billing_complaint with negative sentiment and medium urgency, but flagged as ambiguous with low classifier confidence (0.4). No specific charge, amount, or bug behavior was described, so no billing dispute can be verified from the text alone. The feedback also hints at a possible app bug that cannot be substantiated. Relevant billing SOP and policies were retrieved, along with the customer record; however, the underlying issue itself remains too vague to act on definitively without clarification.",
+  "customer_context": "Retrieved record for CUST-004 (Dana Whitfield), standard tier, 14 months tenure. One prior resolved billing ticket (TCK-1290) requesting an invoice with a corrected company address. One active order ORD-8654, Standard monthly plan, $29.00, dated 2026-07-01.",
+  "workflow_references": [
+    "SOP-BILLING-001"
+  ],
   "policy_references": [
-    "POL-FEEDBACK-001"
+    "POL-REFUND-001",
+    "POL-SLA-001"
   ],
   "suggested_actions": [
     {
-      "action_type": "policy_action",
-      "action": "Log this uncategorized feedback and route it to a CS lead for weekly triage per POL-FEEDBACK-001.",
+      "action_type": "customer_response",
+      "action": "Reply to the customer requesting specifics: which charge appears wrong (date/amount) and what the app did incorrectly, so the disputed charge can be verified against order history per SOP-BILLING-001.",
       "source_ids": [
-        "POL-FEEDBACK-001"
+        "SOP-BILLING-001"
       ]
     },
     {
-      "action_type": "customer_response",
-      "action": "Reach out to Dana Whitfield to request specific details about both the billing concern and the app behavior, so the feedback can be properly categorized and handled per the general feedback handling process in POL-FEEDBACK-001.",
+      "action_type": "policy_action",
+      "action": "Once details are provided, verify the disputed charge against order ORD-8654 in the billing system and check refund eligibility (charge within 60 days) per SOP-BILLING-001 and POL-REFUND-001; if a duplicate or erroneous charge is confirmed, initiate a full refund (processed within 5 business days for standard tier) and inform the customer of the timeline.",
       "source_ids": [
-        "POL-FEEDBACK-001"
+        "SOP-BILLING-001",
+        "POL-REFUND-001"
+      ]
+    },
+    {
+      "action_type": "policy_action",
+      "action": "Meet the support response SLA for this billing complaint: as a standard-tier customer, provide a first response within 8 business hours per POL-SLA-001.",
+      "source_ids": [
+        "POL-SLA-001"
       ]
     },
     {
       "action_type": "manual_triage",
-      "action": "Manually review whether the billing concern relates to active order ORD-8654 or the prior resolved billing ticket TCK-1290; no billing-specific policy or SOP was retrieved to guide a grounded billing action.",
+      "action": "Manually assess the ambiguous app reference (\"the thing wrong\") after the customer clarifies; if it turns out to be a confirmed service-impacting bug rather than a billing issue, re-route to the bug_report workflow and apply the relevant escalation rules.",
       "source_ids": []
     }
   ],
-  "confidence": 0.25,
-  "report_id": "RPT-73629806d7",
+  "confidence": 0.35,
+  "report_id": "RPT-0e92c95b7e",
   "classification": {
-    "category": "other",
+    "category": "billing_complaint",
     "sentiment": "negative",
     "urgency": "medium",
-    "confidence": 0.3,
-    "reason": "The feedback is vague, mentioning both a billing issue and an unspecified app problem without enough detail to reliably determine a single category.",
+    "confidence": 0.4,
+    "reason": "The feedback mentions billing being 'weird' and also vaguely references the app doing 'the thing wrong,' which could indicate a bug; billing is the more concrete complaint but the text is too vague to be certain.",
     "is_ambiguous": true
   },
   "warnings": [],
-  "missing_context": [
-    "guidelines: no matching record found"
-  ],
+  "missing_context": [],
   "needs_human_review": true,
-  "review_reason": "classification confidence 0.30 below 0.65; missing context: guidelines: no matching record found; report confidence 0.25 below 0.7",
+  "review_reason": "classification confidence 0.40 below 0.65; report confidence 0.35 below 0.7",
   "status": "pending_review"
 }

@@ -1,6 +1,6 @@
 {
-  "summary": "Customer CUST-404 emailed asking about the status of their refund. The feedback was classified as a billing_complaint with negative sentiment and medium urgency. The customer record could not be retrieved, so no billing history, charge details, or transaction ID are available to verify the refund request. The refund policy (POL-REFUND-001) and billing complaint SOP (SOP-BILLING-001) were retrieved and provide the framework for handling this case, but resolution cannot proceed without the missing customer/billing data.",
-  "customer_context": "No customer record was retrieved for CUST-404. Billing history, charge details, and any prior refund requests are unavailable, so refund eligibility and status cannot be verified from context.",
+  "summary": "Customer CUST-404 emailed asking about the status of a refund. Classified as a billing_complaint with negative sentiment and medium urgency (classifier confidence 0.82). The refund policy (POL-REFUND-001) and billing complaint SOP (SOP-BILLING-001) were retrieved, but NO customer record was found, so the specific charge, refund request, and eligibility cannot be verified. Report confidence is lowered accordingly.",
+  "customer_context": "No customer record was retrieved for CUST-404. Order history, charge details, and any prior refund request could not be verified.",
   "workflow_references": [
     "SOP-BILLING-001"
   ],
@@ -9,42 +9,35 @@
   ],
   "suggested_actions": [
     {
+      "action_type": "policy_action",
+      "action": "Verify the disputed charge against the customer's order history in the billing system and check refund eligibility (charge within 60 days) per POL-REFUND-001 and SOP-BILLING-001.",
+      "source_ids": [
+        "POL-REFUND-001",
+        "SOP-BILLING-001"
+      ]
+    },
+    {
+      "action_type": "policy_action",
+      "action": "If a duplicate or erroneous charge is confirmed, initiate the refund and inform the customer of the processing timeline (full refund within 5 business days, or 48 hours for premium/enterprise customers) per POL-REFUND-001 and SOP-BILLING-001, then log the resolution and link the transaction ID to the ticket.",
+      "source_ids": [
+        "POL-REFUND-001",
+        "SOP-BILLING-001"
+      ]
+    },
+    {
       "action_type": "manual_triage",
-      "action": "Locate and verify the disputed charge against the customer's order history in the billing system, since no customer record was retrieved and the refund cannot be assessed without it.",
+      "action": "Manually locate the CUST-404 account, since no customer record was retrieved, to confirm identity and the specific charge/refund request before applying any policy action.",
       "source_ids": []
-    },
-    {
-      "action_type": "policy_action",
-      "action": "Once the charge is located, check refund eligibility under POL-REFUND-001 (request must be within 60 days of charge date) and follow the verification steps in SOP-BILLING-001. If a duplicate or erroneous charge is confirmed, initiate the refund per POL-REFUND-001 (refunded in full within 5 business days, or 48 hours for premium/enterprise customers).",
-      "source_ids": [
-        "POL-REFUND-001",
-        "SOP-BILLING-001"
-      ]
-    },
-    {
-      "action_type": "customer_response",
-      "action": "After verifying the charge, respond to the customer with the refund status and the applicable processing timeline as required by SOP-BILLING-001 and POL-REFUND-001.",
-      "source_ids": [
-        "POL-REFUND-001",
-        "SOP-BILLING-001"
-      ]
-    },
-    {
-      "action_type": "policy_action",
-      "action": "Log the resolution and link the transaction ID to the ticket per SOP-BILLING-001.",
-      "source_ids": [
-        "SOP-BILLING-001"
-      ]
     }
   ],
   "confidence": 0.4,
-  "report_id": "RPT-1a58ccbb89",
+  "report_id": "RPT-b10557eb3a",
   "classification": {
     "category": "billing_complaint",
     "sentiment": "negative",
     "urgency": "medium",
-    "confidence": 0.85,
-    "reason": "The customer is asking about the status of a refund, which is a billing-related dispute.",
+    "confidence": 0.82,
+    "reason": "The customer is asking about the status of a refund, which is a billing/charges dispute.",
     "is_ambiguous": false
   },
   "warnings": [],

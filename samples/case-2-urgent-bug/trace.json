@@ -1,32 +1,32 @@
 {
-  "run_id": "RUN-a6e4d9171b",
-  "started_at": "2026-07-22T18:26:48.547952+00:00",
+  "run_id": "RUN-bc48c455fb",
+  "started_at": "2026-07-23T02:20:45.363155+00:00",
   "steps": [
     {
       "step": "intake",
-      "elapsed_ms": 16,
+      "elapsed_ms": 17,
       "submission": {
         "feedback_text": "Webhook deliveries have been down for 6 hours, our whole logistics operation is blocked!",
         "customer_id": "CUST-002",
-        "timestamp": "2026-07-22T18:26:48.547724Z",
+        "timestamp": "2026-07-23T02:20:45.362934Z",
         "channel": "chat"
       }
     },
     {
       "step": "classification",
-      "elapsed_ms": 3498,
+      "elapsed_ms": 2878,
       "result": {
         "category": "bug_report",
         "sentiment": "negative",
         "urgency": "high",
         "confidence": 0.95,
-        "reason": "The customer reports webhook deliveries being down for 6 hours, indicating a broken service. This is service-impacting and blocking their business operation, warranting high urgency.",
+        "reason": "The customer reports webhook deliveries have been down for hours, a service-impacting failure of documented functionality. It is blocking their operations, making it high urgency.",
         "is_ambiguous": false
       }
     },
     {
       "step": "retrieval",
-      "elapsed_ms": 12586,
+      "elapsed_ms": 11510,
       "iterations": 2,
       "source_states": {
         "customer": "retrieved",
@@ -38,7 +38,7 @@
           "tool_name": "get_customer",
           "arguments": {
             "customer_id": "CUST-002",
-            "reason": "Retrieve tier, tenure, and past ticket history for CUST-002 to assess impact and support entitlements for a high-urgency webhook outage bug report."
+            "reason": "Look up the submitting customer's tier, tenure, and history to assess impact of the webhook outage and inform the bug report."
           },
           "status": "success",
           "source_ids": [
@@ -51,19 +51,19 @@
           "tool_name": "search_policies",
           "arguments": {
             "category": "bug_report",
-            "query": "webhook outage SLA service downtime",
-            "reason": "Find applicable policies (SLA, service credit, escalation) for a service-impacting webhook outage classified as a bug report."
+            "query": "service outage SLA webhook",
+            "reason": "Find policies applicable to a service-impacting bug/outage, including SLA obligations for the webhook downtime."
           },
           "status": "not_found",
           "source_ids": [],
-          "message": "no policy applies to category 'bug_report' matching query 'webhook outage sla service downtime'",
+          "message": "no policy applies to category 'bug_report' matching query 'service outage sla webhook'",
           "deduped": false
         },
         {
           "tool_name": "get_cs_guidelines",
           "arguments": {
             "category": "bug_report",
-            "reason": "Fetch the standard CS workflow for handling bug reports to guide next steps on this high-urgency outage."
+            "reason": "Fetch the standard CS workflow for handling a high-urgency bug report / service outage."
           },
           "status": "success",
           "source_ids": [
@@ -76,7 +76,7 @@
           "tool_name": "search_policies",
           "arguments": {
             "category": "bug_report",
-            "reason": "Broaden the earlier not_found search by dropping the query to find any general bug_report policies (SLA/escalation referenced by the CS guideline)."
+            "reason": "Broadening the earlier not_found search by dropping the query to retrieve any policies applicable to bug_report (e.g. the SLA/escalation policies referenced in SOP-BUG-001)."
           },
           "status": "success",
           "source_ids": [
@@ -91,7 +91,7 @@
     },
     {
       "step": "validate_context",
-      "elapsed_ms": 12586,
+      "elapsed_ms": 11510,
       "review_reasons": [
         "high urgency"
       ],
@@ -99,15 +99,15 @@
     },
     {
       "step": "report",
-      "elapsed_ms": 23807,
-      "confidence": 0.85,
+      "elapsed_ms": 21789,
+      "confidence": 0.86,
       "needs_human_review": true,
       "review_reason": "high urgency",
       "warnings": []
     },
     {
       "step": "final",
-      "elapsed_ms": 23807,
+      "elapsed_ms": 21789,
       "status": "pending_review",
       "retry_count": 0
     }

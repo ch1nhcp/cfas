@@ -1,6 +1,6 @@
 {
-  "run_id": "RUN-6b239d8c19",
-  "started_at": "2026-07-22T18:28:30.765436+00:00",
+  "run_id": "RUN-de73729fcf",
+  "started_at": "2026-07-23T02:21:51.139691+00:00",
   "steps": [
     {
       "step": "intake",
@@ -8,18 +8,18 @@
       "submission": {
         "feedback_text": "I was double-charged",
         "customer_id": "CUST-001",
-        "timestamp": "2026-07-22T18:28:30.765226Z",
+        "timestamp": "2026-07-23T02:21:51.139457Z",
         "channel": "email"
       }
     },
     {
       "step": "processing_failed",
-      "elapsed_ms": 3011,
+      "elapsed_ms": 3007,
       "error": "InjectedLLMFailure: injected LLM failure"
     },
     {
       "step": "final",
-      "elapsed_ms": 3011,
+      "elapsed_ms": 3007,
       "status": "processing_failed",
       "retry_count": 2
     }

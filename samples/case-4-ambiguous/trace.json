@@ -1,6 +1,6 @@
 {
-  "run_id": "RUN-289dea2488",
-  "started_at": "2026-07-22T18:27:57.893195+00:00",
+  "run_id": "RUN-6be410eaa3",
+  "started_at": "2026-07-23T02:21:26.488669+00:00",
   "steps": [
     {
       "step": "intake",
@@ -8,37 +8,37 @@
       "submission": {
         "feedback_text": "billing is weird and the app sometimes does the thing wrong?",
         "customer_id": "CUST-004",
-        "timestamp": "2026-07-22T18:27:57.892908Z",
+        "timestamp": "2026-07-23T02:21:26.488439Z",
         "channel": "web_form"
       }
     },
     {
       "step": "classification",
-      "elapsed_ms": 3371,
+      "elapsed_ms": 3315,
       "result": {
-        "category": "other",
+        "category": "billing_complaint",
         "sentiment": "negative",
         "urgency": "medium",
-        "confidence": 0.3,
-        "reason": "The feedback is vague, mentioning both a billing issue and an unspecified app problem without enough detail to reliably determine a single category.",
+        "confidence": 0.4,
+        "reason": "The feedback mentions billing being 'weird' and also vaguely references the app doing 'the thing wrong,' which could indicate a bug; billing is the more concrete complaint but the text is too vague to be certain.",
         "is_ambiguous": true
       }
     },
     {
       "step": "retrieval",
-      "elapsed_ms": 11949,
+      "elapsed_ms": 12490,
       "iterations": 2,
       "source_states": {
         "customer": "retrieved",
         "policies": "retrieved",
-        "guidelines": "not_found"
+        "guidelines": "retrieved"
       },
       "tool_calls": [
         {
           "tool_name": "get_customer",
           "arguments": {
             "customer_id": "CUST-004",
-            "reason": "Look up the customer's tier, tenure, and history to contextualize this ambiguous negative feedback (CUST-004 provided on the web form)."
+            "reason": "Retrieve customer tier, tenure, and order/ticket history to contextualize the billing complaint for CUST-004."
           },
           "status": "success",
           "source_ids": [
@@ -50,25 +50,40 @@
         {
           "tool_name": "search_policies",
           "arguments": {
-            "category": "other",
-            "reason": "Find policies applicable to the 'other' category since the feedback is ambiguous and couldn't be reliably classified."
+            "category": "billing_complaint",
+            "query": "refund billing dispute",
+            "reason": "Find billing-related policies (refunds, adjustments, disputes) applicable to the classified billing_complaint category."
           },
-          "status": "success",
-          "source_ids": [
-            "POL-FEEDBACK-001"
-          ],
-          "message": null,
+          "status": "not_found",
+          "source_ids": [],
+          "message": "no policy applies to category 'billing_complaint' matching query 'refund billing dispute'",
           "deduped": false
         },
         {
           "tool_name": "get_cs_guidelines",
           "arguments": {
-            "category": "other",
-            "reason": "Fetch the standard CS workflow for handling 'other'/ambiguous feedback so the report can recommend next steps."
+            "category": "billing_complaint",
+            "reason": "Fetch the standard CS workflow for handling billing complaints, the classified category."
           },
-          "status": "not_found",
-          "source_ids": [],
-          "message": "no CS guideline for category 'other'",
+          "status": "success",
+          "source_ids": [
+            "SOP-BILLING-001"
+          ],
+          "message": null,
+          "deduped": false
+        },
+        {
+          "tool_name": "search_policies",
+          "arguments": {
+            "category": "billing_complaint",
+            "reason": "Broadening the earlier not_found policy search by dropping the query to find any policy applicable to the billing_complaint category."
+          },
+          "status": "success",
+          "source_ids": [
+            "POL-REFUND-001",
+            "POL-SLA-001"
+          ],
+          "message": null,
           "deduped": false
         }
       ],
@@ -76,26 +91,23 @@
     },
     {
       "step": "validate_context",
-      "elapsed_ms": 11949,
+      "elapsed_ms": 12490,
       "review_reasons": [
-        "classification confidence 0.30 below 0.65",
-        "missing context: guidelines: no matching record found"
+        "classification confidence 0.40 below 0.65"
       ],
-      "missing_context": [
-        "guidelines: no matching record found"
-      ]
+      "missing_context": []
     },
     {
       "step": "report",
-      "elapsed_ms": 20963,
-      "confidence": 0.25,
+      "elapsed_ms": 24201,
+      "confidence": 0.35,
       "needs_human_review": true,
-      "review_reason": "classification confidence 0.30 below 0.65; missing context: guidelines: no matching record found; report confidence 0.25 below 0.7",
+      "review_reason": "classification confidence 0.40 below 0.65; report confidence 0.35 below 0.7",
       "warnings": []
     },
     {
       "step": "final",
-      "elapsed_ms": 20963,
+      "elapsed_ms": 24201,
       "status": "pending_review",
       "retry_count": 0
     }

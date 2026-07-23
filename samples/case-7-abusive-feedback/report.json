@@ -1,17 +1,17 @@
 {
-  "summary": "Customer Dana Whitfield (CUST-004) sent an email containing a threatening statement toward the support team while referencing an unspecified account issue. The message was classified as an abuse/policy violation with high urgency (classifier confidence 0.72, flagged ambiguous because the underlying account problem is not specified). Full customer, policy, and SOP context was retrieved successfully. Handling should follow the abuse workflow: preserve the message verbatim, escalate to Trust & Safety, and limit engagement to a single standard acknowledgement. Note that the actual account issue remains unspecified and cannot be triaged from the available information.",
-  "customer_context": "Retrieved record for CUST-004, Dana Whitfield (dana.whitfield@example.com), standard tier, 14 months tenure. One prior resolved ticket (TCK-1290, billing complaint about a corrected invoice address, opened 2026-06-03). One active order (ORD-8654, Standard monthly plan, $29.00, dated 2026-07-01). No prior abuse violations are recorded.",
+  "summary": "Customer CUST-004 (Dana Whitfield) sent an email containing a threatening statement directed at the support team ('make you...regret it'), classified as an abuse/policy violation with high urgency. The message also references an unspecified account issue that was not detailed, making it ambiguous. Full customer, policy, and SOP context was retrieved successfully. Per abuse handling policy this must be logged verbatim and escalated to Trust & Safety; the underlying account concern cannot be diagnosed from the message alone and may require follow-up if the customer re-engages non-abusively.",
+  "customer_context": "CUST-004 is Dana Whitfield (dana.whitfield@example.com), a standard-tier customer with 14 months tenure. One past ticket (TCK-1290, billing complaint) was resolved on 2026-06-03 regarding a corrected invoice company address. The customer has one active order (ORD-8654, Standard monthly plan, $29.00, dated 2026-07-01). No open account issue is documented in the record that matches the vague complaint in the feedback.",
   "workflow_references": [
     "SOP-ABUSE-001"
   ],
   "policy_references": [
-    "POL-ABUSE-001",
-    "POL-ESCALATION-001"
+    "POL-ESCALATION-001",
+    "POL-ABUSE-001"
   ],
   "suggested_actions": [
     {
       "action_type": "escalation",
-      "action": "Escalate the message immediately to Trust & Safety because it contains a threat toward the support team, per POL-ESCALATION-001 and SOP-ABUSE-001.",
+      "action": "Escalate this feedback immediately to Trust & Safety because it contains a threat directed at the support team, per POL-ESCALATION-001 and SOP-ABUSE-001.",
       "source_ids": [
         "POL-ESCALATION-001",
         "SOP-ABUSE-001"
@@ -19,7 +19,7 @@
     },
     {
       "action_type": "policy_action",
-      "action": "Preserve the original feedback verbatim for the Trust & Safety record per POL-ABUSE-001 and SOP-ABUSE-001.",
+      "action": "Preserve the original message verbatim for the Trust & Safety record and flag the account for review of repeated violations, per POL-ABUSE-001 and SOP-ABUSE-001.",
       "source_ids": [
         "POL-ABUSE-001",
         "SOP-ABUSE-001"
@@ -27,37 +27,31 @@
     },
     {
       "action_type": "customer_response",
-      "action": "Send at most one standard acknowledgement and do not engage further with the abusive content, per POL-ABUSE-001.",
+      "action": "Send at most one standard acknowledgement and do not engage with the abusive content, per POL-ABUSE-001 and SOP-ABUSE-001.",
       "source_ids": [
-        "POL-ABUSE-001"
-      ]
-    },
-    {
-      "action_type": "policy_action",
-      "action": "Flag the account (CUST-004) for review of repeated violations per SOP-ABUSE-001; note no prior violations currently appear in the record.",
-      "source_ids": [
+        "POL-ABUSE-001",
         "SOP-ABUSE-001"
       ]
     },
     {
       "action_type": "manual_triage",
-      "action": "The specific account issue the customer references is unspecified; after Trust & Safety handling, have an officer manually determine and follow up on the underlying account problem if the customer clarifies.",
+      "action": "The underlying account issue is unspecified in the feedback and no matching open issue appears in the customer record; if the customer re-engages non-abusively, manually gather details on the account problem before any account remediation.",
       "source_ids": []
     }
   ],
-  "confidence": 0.72,
-  "report_id": "RPT-3a61cade50",
+  "confidence": 0.68,
+  "report_id": "RPT-a73d56ebc3",
   "classification": {
     "category": "abuse_policy_violation",
     "sentiment": "negative",
     "urgency": "high",
     "confidence": 0.72,
-    "reason": "The message contains a threatening statement ('make you and your support team regret it'), which violates acceptable-use policy and warrants high urgency, though it also references an unspecified account issue.",
+    "reason": "The message contains a threatening statement directed at the support team ('make you...regret it'), which violates acceptable-use policy, though it also references an unspecified account issue.",
     "is_ambiguous": true
   },
   "warnings": [],
   "missing_context": [],
   "needs_human_review": true,
-  "review_reason": "classification flagged as ambiguous; high urgency; abuse/policy violation category",
+  "review_reason": "classification flagged as ambiguous; high urgency; abuse/policy violation category; report confidence 0.68 below 0.7",
   "status": "pending_review"
 }

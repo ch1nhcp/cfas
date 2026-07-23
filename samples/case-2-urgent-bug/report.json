@@ -1,6 +1,6 @@
 {
-  "summary": "Enterprise customer Bravo Logistics Ltd. (CUST-002) reports via chat that webhook deliveries have been down for approximately 6 hours, blocking their entire logistics operation. Classified as a high-urgency bug report (confidence 0.95). This appears to be a confirmed service-impacting issue and may relate to an existing open ticket (TCK-0873) about webhook delivery delays. All relevant customer, policy, and SOP context was retrieved successfully; report confidence is high.",
-  "customer_context": "CUST-002 is Bravo Logistics Ltd. (ops@bravologistics.example.com), an enterprise-tier customer with 41 months tenure. They hold an active Enterprise plan (250 seats, annual, $24,000/yr; ORD-7210). Past tickets include an OPEN bug report TCK-0873 ('Webhook deliveries delayed during peak hours', opened 2026-06-28) and a resolved feature request TCK-0512 (SSO via Okta). The currently reported webhook outage may be a continuation or escalation of TCK-0873.",
+  "summary": "Bravo Logistics Ltd. (CUST-002), an enterprise customer, reports via chat that webhook deliveries have been down for ~6 hours, blocking their entire logistics operation. Classified as a high-urgency bug report (confidence 0.95). This is service-impacting and appears related to an existing open ticket (TCK-0873) about webhook delivery delays. Full context (customer record, SLA policy, escalation policy, and bug-handling SOP) was retrieved successfully.",
+  "customer_context": "CUST-002 is Bravo Logistics Ltd. (ops@bravologistics.example.com), an enterprise-tier customer with 41 months tenure. They have an active annual Enterprise plan order (ORD-7210, 250 seats, $24,000). Past tickets include an OPEN bug report TCK-0873 (webhook deliveries delayed during peak hours, opened 2026-06-28) and a resolved SSO/Okta feature request (TCK-0512). The current report is likely a continuation or escalation of the ongoing webhook issue in TCK-0873.",
   "workflow_references": [
     "SOP-BUG-001"
   ],
@@ -11,47 +11,43 @@
   "suggested_actions": [
     {
       "action_type": "customer_response",
-      "action": "Send a first response acknowledging the webhook outage within 4 business hours per POL-SLA-001 (enterprise, high-urgency), and provide an initial status update.",
+      "action": "Send a first response within 4 business hours as required for high-urgency enterprise customers per POL-SLA-001, acknowledging the webhook outage and requesting reproduction details, affected environment, and impact scope per SOP-BUG-001.",
       "source_ids": [
-        "POL-SLA-001"
+        "POL-SLA-001",
+        "SOP-BUG-001"
+      ]
+    },
+    {
+      "action_type": "policy_action",
+      "action": "Before filing a new engineering ticket, check the known-issues list and link this report to the existing open ticket TCK-0873 (webhook delivery delays) per SOP-BUG-001.",
+      "source_ids": [
+        "SOP-BUG-001"
       ]
     },
     {
       "action_type": "escalation",
-      "action": "Escalate this service-impacting webhook outage directly to the dedicated enterprise account team and to engineering per POL-ESCALATION-001, and per SOP-BUG-001 escalate confirmed service-impacting bugs to engineering.",
+      "action": "Escalate this confirmed service-impacting webhook outage to engineering within 1 business day and route directly to the customer's dedicated enterprise account team, per POL-ESCALATION-001 and POL-SLA-001.",
       "source_ids": [
         "POL-ESCALATION-001",
-        "SOP-BUG-001"
-      ]
-    },
-    {
-      "action_type": "policy_action",
-      "action": "Ensure engineering escalation is completed within 1 business day and schedule status updates at least every 48 hours while the ticket remains open, per POL-SLA-001.",
-      "source_ids": [
         "POL-SLA-001"
       ]
     },
     {
       "action_type": "policy_action",
-      "action": "Follow SOP-BUG-001: collect reproduction steps, affected environment, and impact scope, and check the known-issues list before filing a new engineering ticket.",
+      "action": "Ensure the customer receives a status update at least every 48 hours while this high-urgency ticket remains open, per POL-SLA-001.",
       "source_ids": [
-        "SOP-BUG-001"
+        "POL-SLA-001"
       ]
-    },
-    {
-      "action_type": "manual_triage",
-      "action": "Verify whether this outage is linked to the existing open ticket TCK-0873 (webhook delivery delays) and consolidate or cross-reference the tickets accordingly.",
-      "source_ids": []
     }
   ],
-  "confidence": 0.85,
-  "report_id": "RPT-e854269e2f",
+  "confidence": 0.86,
+  "report_id": "RPT-3996321d7f",
   "classification": {
     "category": "bug_report",
     "sentiment": "negative",
     "urgency": "high",
     "confidence": 0.95,
-    "reason": "The customer reports webhook deliveries being down for 6 hours, indicating a broken service. This is service-impacting and blocking their business operation, warranting high urgency.",
+    "reason": "The customer reports webhook deliveries have been down for hours, a service-impacting failure of documented functionality. It is blocking their operations, making it high urgency.",
     "is_ambiguous": false
   },
   "warnings": [],
